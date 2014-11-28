@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <ext2.h>
+#include <linux/limits.h>
+#include <string.h>
+
+#include "ext2.h"
 
 char *ext2_image;
-int fd;
+int fd, root;
 struct stat image;
-
-const int root;
 
 int read_image(char *filename){
 	if ((fd = open(filename, O_RDWR)) == -1) {
@@ -37,4 +38,15 @@ int close_image(){
 	}
 
 	return 0;
+}
+
+int traverse_path(char *path){
+
+}
+
+void sb_unallocated_count(int block_change, int inode_change){
+	struct superblock sb = ext2_image[BLOCK_SIZE];
+
+	sb.unallocated_blocks += block_change;
+	sb.unallocated_inodes += inode_change;
 }
