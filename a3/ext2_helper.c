@@ -6,10 +6,9 @@
 
 char *ext2_image;
 int fd;
+struct stat image;
 
-int read_image(char **filename){
-	struct stat image;
-
+int read_image(char *filename){
 	if ((fd = open(filename, O_RDWR)) == -1) {
         perror("Opening image");
         return 1;
@@ -27,3 +26,14 @@ int read_image(char **filename){
     return 0;
 }
 
+int close_image(){
+	if (munmap(ext2_image, image.st_size)){
+		perror("Updating image");
+	}
+
+	if (close(fd)){
+		perror("Closing image");
+	}
+
+	return 0;
+}
