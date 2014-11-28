@@ -6,10 +6,17 @@
 #define INODE_SIZE 128
 #endif
 
+#ifndef ROOT_BLOCK
+#define ROOT_BLOCK 2
+#endif
+
 #include <stdint.h>
 
 int read_image(char *filename);
 int close_image();
+int traverse_path(char *path);
+
+void sb_unallocated_count(int block_change, int inode_change);
 
 struct superblock{
     uint32_t total_inodes;
@@ -36,7 +43,7 @@ struct superblock{
 struct block_group{
     uint32_t addr_block_usage;      //Block address of block usage bitmap
     uint32_t addr_inode_usage;      //Block address of inode usage bitmap
-    uint32_t inode_table;           //Starting block address of inode table
+    uint32_t addr_inode_table;      //Starting block address of inode table
     uint16_t unallocated_blocks;    //Number of unallocated blocks in group
     uint16_t unallocated_inodes;    //Number of unallocated inodes in group
     uint16_t dir;                   //Number of directories in group
@@ -81,4 +88,12 @@ struct inode{
     uint32_t reserved2;
     uint32_t fragment_addr;
     uint32_t osval2;
+};
+
+struct dir{
+    uint32_t inode;
+    uint16_t size;
+    char name_length;
+    char type;
+    char *name;
 };
