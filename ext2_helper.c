@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <sys/mman.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <ext2.h>
 
 char *ext2_image;
 int fd;
 struct stat image;
+
+const int root;
 
 int read_image(char *filename){
 	if ((fd = open(filename, O_RDWR)) == -1) {
