@@ -86,7 +86,7 @@ int file_exists(Inode *dir, char *filename){
 	  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
 	
 	  	while (*dentry && crossed < BLOCK_SIZE){
-	  		if (!strncmp(dentry->name, filename, dentry->name_length)){
+	  		if (!strncmp(&dentry->name, filename, dentry->name_length)){
 	  			index = dentry->inode;
 	  			break;
 	  		}
@@ -102,7 +102,7 @@ int file_exists(Inode *dir, char *filename){
   	return index;
 }
 
-int mk_file_entry(Inode *dir, char *filename, int type){
+int mk_file_entry(Inode *dir, char *filename, char type){
 	int index = -1, i;
 	Dir_entry *dentry = -1;
 
@@ -128,9 +128,9 @@ int mk_file_entry(Inode *dir, char *filename, int type){
 
 	  if (index != -1){
 	  	dentry->inode = (uint32_t) index;
-		dentry->size = (uint16_t) strlen(filename) + 9;
+		dentry->size = (uint16_t) strlen(filename) + 10;
 		dentry->name_length = (char) strlen(filename);
-		dentry->type = (char) type;
+		dentry->type = type;
 		strncpy(dentry->name, filename, (int) dentry->name_length + 1);
 	  }
 
@@ -149,7 +149,7 @@ void rm_file_entry(Inode *dir, char *filename){
 	  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
 	
 	  	while (*dentry && crossed < BLOCK_SIZE){
-	  		if (!strncmp(dentry->name, filename, dentry->name_length)){
+	  		if (!strncmp(&dentry->name, filename, dentry->name_length)){
 				dentry->inode = 0;
 				dentry->size = 0;
 				dentry->name_length = 0;
