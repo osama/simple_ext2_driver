@@ -184,6 +184,7 @@ int find_free_block(){
 	int free_index;
 
 
+	toggle_data_bitmap(free_index);
 	return free_index;
 }
 
@@ -192,5 +193,9 @@ int find_free_inode(){
 }
 
 void toggle_data_bitmap(int index){
+
+}
+
+void toggle_inode_bitmap(int index){
 
 }
