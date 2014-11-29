@@ -6,8 +6,9 @@
 
 #include "ext2.h"
 
+
 unsigned char *ext2_image;
-int fd, root;
+int fd, addr_root = -1;
 struct stat image;
 
 int read_image(char *filename){
@@ -41,16 +42,59 @@ int close_image(){
 }
 
 int traverse_path(char *path){
+	int index = -1, taken = 0, steps, i, lookup = root;
+	Inode *walk;
+	char *buffer = NULL, *tmp = path;
 
+	for (steps=0; tmp[steps]; s[steps]=='/' ? steps++ : *tmp++);
+	
+	if (addr_root == -1){
+		Block_group *bgr = (Block_group *) &ext2_image[BLOCK_SIZE*ROOT_BLOCK];
+		addr_root = bgr->addr_inode_table + INODE_SIZE;
+	}
+
+	walk = (Inode *) &ext2_image[addr_root];
+
+	int next;
+
+	tmp = path
+	buffer = strtok (tmp, "/");
+  	for (i = 0; i < steps; i++){
+  		buffer = strtok (NULL, "/");
+
+  		int dblock = walk->db_0 * BLOCK_SIZE;
+  		Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
+
+  		next = -1;
+
+  		while (!*dentry){
+  			if (!strncmp(dentry->name, buffer, dentry->name_length)){
+  				next = dentry->inode;
+  				break;
+  			}
+  			
+  			dentry += dentry->size;
+  		}
+
+  		if (next == -1 || i == steps - 1){
+  			index = next;
+  			break;
+  		}
+
+  		walk += (Inode *) &ext2_image[addr_root + next * INODE_SIZE - INODE_SIZE];
+
+  	}
+
+	return index;
 }
 
-int create_dir_entry(char *filename){
-	
+int create_file(Inode *dir, int data_blocks){
+
 }
 
 void sb_unallocated_count(int block_change, int inode_change){
-	Superblock *sb = () &ext2_image[BLOCK_SIZE];
-	Block_group *bgr = () &ext2_image[BLOCK_SIZE*2];
+	Superblock *sb = (Superblock *) &ext2_image[BLOCK_SIZE];
+	Block_group *bgr = (Block_group *) &ext2_image[BLOCK_SIZE*2];
 
 	sb->unallocated_blocks += block_change;
 	sb->unallocated_inodes += inode_change;

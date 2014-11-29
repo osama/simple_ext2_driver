@@ -20,7 +20,7 @@ void unallocated_count(int block_change, int inode_change);
 void update_block_bitmap(int index, int instruction);
 void update_inode_bitmap(int index, int instruction);
 
-typedef struct superblock{
+typedef struct __attribute__((__packed__)) superblock{
     uint32_t total_inodes;
     uint32_t total_blocks;
     uint32_t reserved_blocks;
@@ -42,7 +42,7 @@ typedef struct superblock{
     //Rest of superblock is not relevant to this Assignment
 } Superblock;
 
-typedef struct block_group{
+typedef struct __attribute__((__packed__)) block_group{
     uint32_t addr_block_usage;      //Block address of block usage bitmap
     uint32_t addr_inode_usage;      //Block address of inode usage bitmap
     uint32_t addr_inode_table;      //Starting block address of inode table
@@ -51,7 +51,7 @@ typedef struct block_group{
     uint16_t dir;                   //Number of directories in group
 } Block_group;
 
-typedef struct inode{
+typedef struct __attribute__((__packed__)) inode{
     uint16_t mode;                  //Type and permissions
     uint16_t uid;                   //User ID
     uint32_t size;                  //Size in bytes
@@ -92,7 +92,7 @@ typedef struct inode{
     uint32_t osval2;
 } Inode;
 
-typedef struct dir_entry{
+typedef struct __attribute__((__packed__)) dir_entry{
     uint32_t inode;
     uint16_t size;
     char name_length;
