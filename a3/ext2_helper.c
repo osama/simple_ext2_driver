@@ -62,19 +62,7 @@ int traverse_path(char *path){
   	for (i = 0; i < steps; i++){
   		buffer = strtok (NULL, "/");
 
-  		int dblock = walk->db_0 * BLOCK_SIZE;
-  		Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
-
-  		next = -1;
-
-  		while (!*dentry){
-  			if (!strncmp(dentry->name, buffer, dentry->name_length)){
-  				next = dentry->inode;
-  				break;
-  			}
-  			
-  			dentry += dentry->size;
-  		}
+  		int next = file_exists(walk);
 
   		if (next == -1 || i == steps - 1){
   			index = next;
@@ -90,6 +78,24 @@ int traverse_path(char *path){
 
 int create_file(Inode *dir, int data_blocks){
 
+}
+
+int file_exists(Inode *dir){
+	int index = -1;
+
+	int dblock = dir->db_0 * BLOCK_SIZE;
+  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
+
+  	while (!*dentry){
+  		if (!strncmp(dentry->name, buffer, dentry->name_length)){
+  			index = dentry->inode;
+  			break;
+  		}
+  		
+  		dentry += dentry->size;
+  	}
+
+  	return index;
 }
 
 void sb_unallocated_count(int block_change, int inode_change){
