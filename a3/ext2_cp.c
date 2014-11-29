@@ -18,7 +18,7 @@ int main (int argc, char **argv){
 	int fd;
 
 	if ((fd = open(filename, O_RDONLY)) == -1) {
-        perror("Opening image");
+        perror("Opening local image");
         return 1;
     }
 
@@ -29,7 +29,7 @@ int main (int argc, char **argv){
     close(0);
 
     if (ext_image = MAP_FAILED){
-    	perror("Mapping image");
+    	perror("Mapping local image");
     	return 1;
     }  
 
