@@ -81,21 +81,45 @@ int create_file(Inode *dir, int data_blocks){
 }
 
 int file_exists(Inode *dir){
-	int index = -1;
+	int index = -1, crossed = 0;
 
-	int dblock = dir->db_0 * BLOCK_SIZE;
+	int dblock = dir->db[0] * BLOCK_SIZE;
   	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
 
-  	while (!*dentry){
+  	while (!*dentry && dentry->size < BLOCK_SIZE){
   		if (!strncmp(dentry->name, buffer, dentry->name_length)){
   			index = dentry->inode;
   			break;
   		}
   		
+  		crossed += dentry->size;
   		dentry += dentry->size;
   	}
 
   	return index;
+}
+
+void rm_file_entry(Inode *dir){
+	int crossed = 0;
+
+	int dblock = dir->db[0] * BLOCK_SIZE;
+  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
+
+  	while (!*dentry  && dentry->size < BLOCK_SIZE){
+  		if (!strncmp(dentry->name, buffer, dentry->name_length)){
+  			
+			dentry->inode = 0;
+			dentry->size = 0;
+			dentry->name_length = 0;
+			dentry->type = 0;
+			dentry->*name = 0;
+
+  			break;
+  		}
+  		
+  		crossed += dentry->size;
+  		dentry += dentry->size;
+  	}
 }
 
 void sb_unallocated_count(int block_change, int inode_change){
@@ -126,6 +150,6 @@ int find_free_inode(){
 
 }
 
-void toggle_bitmap(int index){
+void toggle_data_bitmap(int index){
 
 }
