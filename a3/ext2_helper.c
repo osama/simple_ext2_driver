@@ -76,50 +76,63 @@ int traverse_path(char *path){
 	return index;
 }
 
-int create_file(Inode *dir, int data_blocks){
-
-}
-
 int file_exists(Inode *dir){
-	int index = -1, crossed = 0;
+	int index = -1, i;
 
-	int dblock = dir->db[0] * BLOCK_SIZE;
-  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
+	for(i = 0; i < 12; i++){
+		if (!dir->db[i])
+			break;
 
-  	while (!*dentry && dentry->size < BLOCK_SIZE){
-  		if (!strncmp(dentry->name, buffer, dentry->name_length)){
-  			index = dentry->inode;
-  			break;
-  		}
-  		
-  		crossed += dentry->size;
-  		dentry += dentry->size;
-  	}
+		int crossed = 0;
+		int dblock = dir->db[i] * BLOCK_SIZE;
+	  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
+	
+	  	while (!*dentry && crossed < BLOCK_SIZE){
+	  		if (!strncmp(dentry->name, buffer, dentry->name_length)){
+	  			index = dentry->inode;
+	  			break;
+	  		}
+	  		
+	  		crossed += dentry->size;
+	  		dentry += dentry->size;
+	  	}
+
+	  	if (index != -1)
+	  		break;
+	  }
 
   	return index;
 }
 
+int mk_file_entry(Inode *dir){
+
+}
+
 void rm_file_entry(Inode *dir){
-	int crossed = 0;
+	int i = 0;
 
-	int dblock = dir->db[0] * BLOCK_SIZE;
-  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
+	for(i = 0; i < 12; i++){
+		if (!dir->db[i])
+			break;
 
-  	while (!*dentry  && dentry->size < BLOCK_SIZE){
-  		if (!strncmp(dentry->name, buffer, dentry->name_length)){
-  			
-			dentry->inode = 0;
-			dentry->size = 0;
-			dentry->name_length = 0;
-			dentry->type = 0;
-			dentry->*name = 0;
-
-  			break;
-  		}
-  		
-  		crossed += dentry->size;
-  		dentry += dentry->size;
-  	}
+		int crossed = 0;
+		int dblock = dir->db[i] * BLOCK_SIZE;
+	  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
+	
+	  	while (!*dentry && crossed < BLOCK_SIZE){
+	  		if (!strncmp(dentry->name, buffer, dentry->name_length)){
+				dentry->inode = 0;
+				dentry->size = 0;
+				dentry->name_length = 0;
+				dentry->type = 0;
+				dentry->*name = 0;
+	  			return;
+	  		}
+	  		
+	  		crossed += dentry->size;
+	  		dentry += dentry->size;
+	  	}
+	  }
 }
 
 void sb_unallocated_count(int block_change, int inode_change){
