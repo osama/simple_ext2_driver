@@ -29,7 +29,7 @@ int read_image(char *filename){
     return 0;
 }
 
-int close_image(){
+void close_image(){
 	if (munmap(ext2_image, image.st_size)){
 		perror("Updating image");
 	}
@@ -37,8 +37,6 @@ int close_image(){
 	if (close(fd)){
 		perror("Closing image");
 	}
-
-	return 0;
 }
 
 int traverse_path(char *path){
@@ -87,7 +85,7 @@ int file_exists(Inode *dir, char *filename){
 		int dblock = dir->db[i] * BLOCK_SIZE;
 	  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
 	
-	  	while (!*dentry && crossed < BLOCK_SIZE){
+	  	while (*dentry && crossed < BLOCK_SIZE){
 	  		if (!strncmp(dentry->name, filename, dentry->name_length)){
 	  			index = dentry->inode;
 	  			break;
@@ -104,8 +102,39 @@ int file_exists(Inode *dir, char *filename){
   	return index;
 }
 
-int mk_file_entry(Inode *dir, char *filename){
+int mk_file_entry(Inode *dir, char *filename, int type){
+	int index = -1, i;
+	Dir_entry *dentry = -1;
 
+	for(i = 0; i < 12; i++){
+		if (!dir->db[i])
+			break;
+
+		int crossed = 0;
+		int dblock = dir->db[i] * BLOCK_SIZE;
+	  	dentry = (Dir_entry *) &ext2_image[dblock];
+	
+	  	while (*dentry && crossed < BLOCK_SIZE){	  		
+	  		crossed += dentry->size;
+	  		dentry += dentry->size;
+	  	}
+
+	  	if (i == 12)
+	  		return index;
+
+	  }
+
+	  index = find_free_inode();
+
+	  if (index != -1){
+	  	dentry->inode = (uint32_t) index;
+		dentry->size = (uint16_t) strlen(filename) + 9;
+		dentry->name_length = (char) strlen(filename);
+		dentry->type = (char) type;
+		strncpy(dentry->name, filename, (int) dentry->name_length + 1);
+	  }
+
+  	return index;
 }
 
 void rm_file_entry(Inode *dir, char *filename){
@@ -119,13 +148,13 @@ void rm_file_entry(Inode *dir, char *filename){
 		int dblock = dir->db[i] * BLOCK_SIZE;
 	  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
 	
-	  	while (!*dentry && crossed < BLOCK_SIZE){
+	  	while (*dentry && crossed < BLOCK_SIZE){
 	  		if (!strncmp(dentry->name, filename, dentry->name_length)){
 				dentry->inode = 0;
 				dentry->size = 0;
 				dentry->name_length = 0;
 				dentry->type = 0;
-				dentry->*name = 0;
+				dentry->name = 0;
 	  			return;
 	  		}
 	  		

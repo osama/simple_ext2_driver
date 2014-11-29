@@ -42,5 +42,7 @@ int main (int argc, char **argv){
 
 	rm_file_entry(dir, temp);
 
+	close_image();
+
 	return 0;
 }
