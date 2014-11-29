@@ -62,7 +62,7 @@ int traverse_path(char *path){
   	for (i = 0; i < steps; i++){
   		buffer = strtok (NULL, "/");
 
-  		int next = file_exists(walk);
+  		int next = file_exists(walk, buffer);
 
   		if (next == -1 || i == steps - 1){
   			index = next;
@@ -76,7 +76,7 @@ int traverse_path(char *path){
 	return index;
 }
 
-int file_exists(Inode *dir){
+int file_exists(Inode *dir, char *filename){
 	int index = -1, i;
 
 	for(i = 0; i < 12; i++){
@@ -88,7 +88,7 @@ int file_exists(Inode *dir){
 	  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
 	
 	  	while (!*dentry && crossed < BLOCK_SIZE){
-	  		if (!strncmp(dentry->name, buffer, dentry->name_length)){
+	  		if (!strncmp(dentry->name, filename, dentry->name_length)){
 	  			index = dentry->inode;
 	  			break;
 	  		}
@@ -104,11 +104,11 @@ int file_exists(Inode *dir){
   	return index;
 }
 
-int mk_file_entry(Inode *dir){
+int mk_file_entry(Inode *dir, char *filename){
 
 }
 
-void rm_file_entry(Inode *dir){
+void rm_file_entry(Inode *dir, char *filename){
 	int i = 0;
 
 	for(i = 0; i < 12; i++){
@@ -120,7 +120,7 @@ void rm_file_entry(Inode *dir){
 	  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
 	
 	  	while (!*dentry && crossed < BLOCK_SIZE){
-	  		if (!strncmp(dentry->name, buffer, dentry->name_length)){
+	  		if (!strncmp(dentry->name, filename, dentry->name_length)){
 				dentry->inode = 0;
 				dentry->size = 0;
 				dentry->name_length = 0;

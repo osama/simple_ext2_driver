@@ -40,7 +40,7 @@ int main (int argc, char **argv){
 
 	toggle_inode_bitmap(index);
 
-	rm_file_entry(dir);
+	rm_file_entry(dir, temp);
 
 	return 0;
 }
