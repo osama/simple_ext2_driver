@@ -66,18 +66,7 @@ typedef struct __attribute__((__packed__)) inode{
     uint32_t osval;
 
     //Direct block pointers
-    uint32_t db_0;
-    uint32_t db_1;
-    uint32_t db_2;
-    uint32_t db_3;
-    uint32_t db_4;
-    uint32_t db_5;
-    uint32_t db_6;
-    uint32_t db_7;
-    uint32_t db_8;
-    uint32_t db_9;
-    uint32_t db_10;
-    uint32_t db_11;
+    uint32_t db[12];
 
     //Indirect block pointers
     uint32_t db_singly;
