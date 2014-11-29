@@ -86,5 +86,5 @@ typedef struct __attribute__((__packed__)) dir_entry{
     uint16_t size;
     char name_length;
     char type;
-    char *name;
+    char name[];
 } Dir_entry;
