@@ -25,7 +25,7 @@ int main (int argc, char **argv){
 
 	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - INODE_SIZE];
 
-	if ((index = file_exists(dir)) == -1){
+	if ((index = file_exists(dir, temp)) == -1){
 		fprintf(stderr, "The specified file was not found in %s.\n", argv[1]);
 	}
 
