@@ -102,8 +102,8 @@ int file_exists(Inode *dir, char *filename){
   	return index;
 }
 
-int mk_file_entry(Inode *dir, char *filename, char type){
-	int index = -1, i;
+int mk_file_entry(Inode *dir, char *filename, char type, int index){
+	int i;
 	Dir_entry *dentry = -1;
 
 	for(i = 0; i < 12; i++){
@@ -119,12 +119,11 @@ int mk_file_entry(Inode *dir, char *filename, char type){
 	  		dentry += dentry->size;
 	  	}
 
-	  	if (i == 12)
-	  		return index;
-
 	  }
 
-	  index = find_free_inode();
+	  if (index != -1){
+	  	index = find_free_inode();
+	  }
 
 	  if (index != -1){
 	  	dentry->inode = (uint32_t) index;

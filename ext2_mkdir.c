@@ -29,7 +29,7 @@ int main (int argc, char **argv){
 		fprintf(stderr, "The file already exists in %s.\n", argv[1]);
 	}
 
-	if ((index = mk_file_entry(dir, temp, (char) 0x400)) == -1){
+	if ((index = mk_file_entry(dir, temp, (char) 0x400), -1) == -1){
 		fprintf(stderr, "Error creating file in %s.\n", argv[1]);
 	}
 
