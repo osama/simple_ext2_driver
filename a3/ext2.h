@@ -16,9 +16,11 @@ int read_image(char *filename);
 int close_image();
 int traverse_path(char *path);
 
-void sb_unallocated_count(int block_change, int inode_change);
+void unallocated_count(int block_change, int inode_change);
+void update_block_bitmap(int index, int instruction);
+void update_inode_bitmap(int index, int instruction);
 
-struct superblock{
+typedef struct superblock{
     uint32_t total_inodes;
     uint32_t total_blocks;
     uint32_t reserved_blocks;
@@ -38,18 +40,18 @@ struct superblock{
     uint16_t mounts_since_check;
 
     //Rest of superblock is not relevant to this Assignment
-};
+} Superblock;
 
-struct block_group{
+typedef struct block_group{
     uint32_t addr_block_usage;      //Block address of block usage bitmap
     uint32_t addr_inode_usage;      //Block address of inode usage bitmap
     uint32_t addr_inode_table;      //Starting block address of inode table
     uint16_t unallocated_blocks;    //Number of unallocated blocks in group
     uint16_t unallocated_inodes;    //Number of unallocated inodes in group
     uint16_t dir;                   //Number of directories in group
-};
+} Block_group;
 
-struct inode{
+typedef struct inode{
     uint16_t mode;                  //Type and permissions
     uint16_t uid;                   //User ID
     uint32_t size;                  //Size in bytes
@@ -88,12 +90,12 @@ struct inode{
     uint32_t reserved2;
     uint32_t fragment_addr;
     uint32_t osval2;
-};
+} Inode;
 
-struct dir{
+typedef struct dir_entry{
     uint32_t inode;
     uint16_t size;
     char name_length;
     char type;
     char *name;
-};
+} Dir_entry;

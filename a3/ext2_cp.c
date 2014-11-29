@@ -3,6 +3,7 @@
 #include "ext2.h"
 
 extern char *ext2_image;
+char *file;
 
 int main (int argc, char **argv){
 	if (argc != 4){	//Checking if an incorrect number of arguments have been provided.
@@ -14,5 +15,23 @@ int main (int argc, char **argv){
 		return 1;
 	}
 
+	int fd;
 
+	if ((fd = open(filename, O_RDONLY)) == -1) {
+        perror("Opening image");
+        return 1;
+    }
+
+    fstat(fd, &image);
+
+    file = mmap(NULL, image.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+    close(0);
+
+    if (ext_image = MAP_FAILED){
+    	perror("Mapping image");
+    	return 1;
+    }  
+
+    return 0;
 }
