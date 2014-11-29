@@ -36,16 +36,20 @@ int main (int argc, char **argv){
 	if (file->hard_links > 0)
 		return 0;
 
-	int i;
+	int i, count = 0;
 
 	for (i = 0; i < 12; i++){
-		if (!db[i])
+		if (!db[i]){
 			toggle_data_bitmap(db[i]);
+			count++;
+		}
 	}
 
 	toggle_inode_bitmap(index);
 
 	rm_file_entry(dir, temp);
+
+	sb_unallocated_count(count, 1);
 
 	close_image();
 

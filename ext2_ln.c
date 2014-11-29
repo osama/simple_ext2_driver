@@ -29,7 +29,7 @@ int main (int argc, char **argv){
 	}
 
 	create_link(argv[3], index);
-	}
+	
 
 	return 0;
 }
@@ -55,7 +55,6 @@ void create_link(char *path, int index){
 	}
 
 	file = (Inode *) &ext2_image[addr_root + index * INODE_SIZE - INODE_SIZE];
-	//TODO: Write Inode properly
-	file->db[0] = find_free_block();
+	file->hard_links++;
 
 }
