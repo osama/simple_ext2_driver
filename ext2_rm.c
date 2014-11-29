@@ -47,8 +47,6 @@ int main (int argc, char **argv){
 
 	toggle_inode_bitmap(index);
 
-	rm_file_entry(dir, temp);
-
 	sb_unallocated_count(count, 1);
 
 	close_image();
