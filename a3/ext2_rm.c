@@ -30,6 +30,11 @@ int main (int argc, char **argv){
 	}
 
 	file = (Inode *) &ext2_image[addr_root + index * INODE_SIZE - INODE_SIZE];
+	rm_file_entry(dir, temp);
+	file->hard_links--;
+
+	if (file->hard_links > 0)
+		return 0;
 
 	int i;
 
