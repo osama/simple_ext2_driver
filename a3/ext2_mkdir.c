@@ -48,4 +48,7 @@ int main (int argc, char **argv){
 	*current = data_index;
 	*parent = dir_addr;
 
+	sb_unallocated_count(-1, -1);
+
+	return 0;
 }
