@@ -20,12 +20,16 @@ int main (int argc, char **argv){
 
 	if ((dir_addr = traverse_path(temp)) == -1){
 		fprintf(stderr, "The specified path was not found in %s.\n", argv[1]);
+		close_image();
+		return 1;
 	}
 
 	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - INODE_SIZE];
 
 	if ((index = file_exists(dir, temp)) == -1){
 		fprintf(stderr, "The specified file was not found in %s.\n", argv[1]);
+		close_image();
+		return 1;
 	}
 
 	create_link(argv[3], index);
@@ -42,16 +46,22 @@ void create_link(char *path, int index){
 
 	if ((dir_addr = traverse_path(temp)) == -1){
 		fprintf(stderr, "The specified path was not found in %s.\n", argv[1]);
+		close_image();
+		return;
 	}
 
 	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - INODE_SIZE];
 
 	if ((index = file_exists(dir, temp)) != -1){
 		fprintf(stderr, "The file already exists in %s.\n", argv[1]);
+		close_image();
+		return;
 	}
 
 	if ((index = mk_file_entry(dir, temp, (char) 0xA00), index) == -1){
 		fprintf(stderr, "Error creating file in %s.\n", argv[1]);
+		close_image();
+		return;
 	}
 
 	file = (Inode *) &ext2_image[addr_root + index * INODE_SIZE - INODE_SIZE];
