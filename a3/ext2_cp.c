@@ -4,6 +4,7 @@
 
 extern char *ext2_image;
 char *file;
+struct stat image;
 
 int main (int argc, char **argv){
 	if (argc != 4){	//Checking if an incorrect number of arguments have been provided.
@@ -31,7 +32,51 @@ int main (int argc, char **argv){
     if (ext_image = MAP_FAILED){
     	perror("Mapping local image");
     	return 1;
-    }  
+    }
+
+    int dir_addr, index;
+	char *temp = argv[2];
+	Inode *dir, *file;
+
+	if ((dir_addr = traverse_path(temp)) == -1){
+		fprintf(stderr, "The specified path was not found in %s.\n", argv[1]);
+		return 1;
+	}
+
+	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - INODE_SIZE];
+
+	if ((index = file_exists(dir, temp)) != -1){
+		fprintf(stderr, "The file already exists in %s.\n", argv[1]);
+		return 1;
+	}
+
+	if ((index = mk_file_entry(dir, temp, (char) 0x800), -1) == -1){
+		fprintf(stderr, "Error creating file in %s.\n", argv[1]);
+		return 1;
+	}
+
+	file = (Inode *) &ext2_image[addr_root + index * INODE_SIZE - INODE_SIZE];
+	//TODO: Write Inode properly
+	
+	int i, read = 0, written = 0;
+
+	for (i = 0; i < 12; i++){
+		file->db[i] = find_free_block();
+
+		while (written < BLOCK_SIZE){
+			if (read = image.st_size)
+				break;
+
+			ext2_image[file->db[i] + written] = file[read];
+			read++;
+			written++;
+		}
+
+		if (read = image.st_size)
+			break;
+
+		written = 0;
+	}
 
     return 0;
 }
