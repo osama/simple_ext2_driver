@@ -107,6 +107,14 @@ int mk_file_entry(Inode *dir, char *filename, char type, int index){
 	int i;
 	Dir_entry *dentry = -1;
 
+	if (index == -1){
+	  	index = find_free_inode();
+
+	  	if (index == -1){
+	  		return index;
+	  	}
+	}
+
 	for(i = 0; i < 12; i++){
 		if (!dir->db[i])
 			break;
@@ -120,10 +128,6 @@ int mk_file_entry(Inode *dir, char *filename, char type, int index){
 	  		dentry += dentry->size;
 	  	}
 
-	  }
-
-	  if (index != -1){
-	  	index = find_free_inode();
 	  }
 
 	  if (index != -1){
