@@ -67,6 +67,14 @@ int main (int argc, char **argv){
 	for (i = 0; i < 12; i++){
 		file->db[i] = find_free_block();
 
+		if (file->db[i] == -1){
+			file->db[i] = 0;
+			fprintf(stderr, "Out of space on %s\n", argv[1]);
+			break;
+		}
+
+		sb_unallocated_count(-1, 0);
+
 		while (written < BLOCK_SIZE){
 			if (read = image.st_size)
 				break;
