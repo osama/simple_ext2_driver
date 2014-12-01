@@ -68,7 +68,7 @@ int traverse_path(char *path){
   			break;
   		}
 
-  		walk += (Inode *) &ext2_image[addr_root + next * INODE_SIZE - INODE_SIZE];
+  		walk = (Inode *) &ext2_image[addr_root + next * INODE_SIZE - INODE_SIZE];
 
   	}
 
@@ -185,22 +185,66 @@ char *interpret_bitmap(int index){
 
 int find_free_block(){
 	Block_group *bgr = &ext2_image[BLOCK_SIZE*2];
-	int bitmap_addr = BLOCK_SIZE * bgr.addr_block_usage;
-	int free_index;
+	int bitmap_addr = BLOCK_SIZE * bgr->addr_block_usage;
+	int free_index == -1, c, d;
 
+	if (bgr->unallocated_blocks <= 0){
+		return -1;
+	}
+
+	for (int c = 0; c < 16 && !found; c++){
+		char test = ext2_image[bitmap_addr + c];
+		int found = 0;
+
+		for (int d = 0; d < 8 && !found; d++){
+			if (!(test & (1 << d))){
+				free_index = 8 - d + c * 8;
+			}
+		}
+	}
 
 	toggle_data_bitmap(free_index);
 	return free_index;
 }
 
 int find_free_inode(){
+	Block_group *bgr = &ext2_image[BLOCK_SIZE*2];
+	int bitmap_addr = BLOCK_SIZE * bgr->addr_inode_usage;
+	int free_index == -1, c, d;
 
+	if (bgr->unallocated_inodes <= 0){
+		return -1;
+	}
+
+	for (int c = 0; c < 2 && !found; c++){
+		char test = ext2_image[bitmap_addr + c];
+		int found = 0;
+
+		for (int d = 0; d < 8 && !found; d++){
+			if (!(test & (1 << d))){
+				free_index = 8 - d + c * 8;
+			}
+		}
+	}
+
+	toggle_inode_bitmap(free_index);
+	return free_index;
 }
 
 void toggle_data_bitmap(int index){
+	Block_group *bgr = &ext2_image[BLOCK_SIZE*2];
+	int bitmap_addr = BLOCK_SIZE * bgr->addr_block_usage;
 
+	int c = index/8, d = 8 - index + c * 8;
+
+	ext2_image[bitmap_addr + c]	^= 1 << d;
 }
 
 void toggle_inode_bitmap(int index){
+	Block_group *bgr = &ext2_image[BLOCK_SIZE*2];
+	int bitmap_addr = BLOCK_SIZE * bgr->addr_inode_usage;
 
+	int c = index/8, d = 8 - index + c * 8;
+
+	ext2_image[bitmap_addr + c]	^= 1 << d;
 }
