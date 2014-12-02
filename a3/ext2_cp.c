@@ -1,12 +1,21 @@
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <linux/limits.h>
+#include <strings.h>
 #include "ext2.h"
 
 extern char *ext2_image;
+extern int addr_root;
 char *file;
 struct stat image;
 
 int main (int argc, char **argv){
+	char *filename = argv[2], *lfile;
+
 	if (argc != 4){	//Checking if an incorrect number of arguments have been provided.
 		printf("usage: ext2_cp virtual_disk local_path absolute_path\n");
 		return 1;
@@ -28,11 +37,11 @@ int main (int argc, char **argv){
     //Mapping opened file into memory
     fstat(fd, &image);
 
-    file = mmap(NULL, image.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    lfile = mmap(NULL, image.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 
     close(fd);	//Closing local file's file descriptor
 
-    if (file = MAP_FAILED){
+    if (file == MAP_FAILED){
     	perror("Mapping local image");
     	close_image();
     	return 1;
@@ -59,7 +68,7 @@ int main (int argc, char **argv){
 		return 1;
 	}
 
-	if ((index = mk_file_entry(dir, temp, (char) 0x800), -1) == -1){
+	if ((index = mk_file_entry(dir, temp, (char) 0x800, -1)) == -1){
 		fprintf(stderr, "Error creating file in %s.\n", argv[1]);
 		close_image();
 		return 1;
@@ -87,15 +96,15 @@ int main (int argc, char **argv){
 
 		//Write to data block until it's full
 		while (written < BLOCK_SIZE){
-			if (read = image.st_size)
+			if (read == image.st_size)
 				break;
 
-			ext2_image[BLOCK_SIZE *file->db[i] - BLOCK_SIZE + written] = file[read];
+			ext2_image[BLOCK_SIZE *file->db[i] - BLOCK_SIZE + written] = lfile[read];
 			read++;
 			written++;
 		}
 
-		if (read = image.st_size)
+		if (read == image.st_size)
 			break;
 
 		written = 0;
@@ -104,10 +113,10 @@ int main (int argc, char **argv){
 	//Obtaining singly indirect pointer, if needed
 	if (read < image.st_size){
 		file->db_singly = find_free_block();
-		uint32_t *db = &ext2_image[file->db_singly * BLOCK_SIZE - BLOCK_SIZE];
+		uint32_t *db = (uint32_t *)  &ext2_image[file->db_singly * BLOCK_SIZE - BLOCK_SIZE];
 
 		if (file->db_singly == -1){
-			file->db_singly == 0;
+			file->db_singly = 0;
 			fprintf(stderr, "Out of space on %s\n", argv[1]);
 		}
 
@@ -125,17 +134,16 @@ int main (int argc, char **argv){
 
 			//Write to data block until it's full
 			while (written < BLOCK_SIZE){
-				if (read = image.st_size)
+				if (read == image.st_size)
 					break;
 
-				ext2_image[BLOCK_SIZE *db[i] - BLOCK_SIZE + written] = file[read];
+				ext2_image[BLOCK_SIZE *db[i] - BLOCK_SIZE + written] = lfile[read];
 				read++;
 				written++;
 			}
 
-			if (read = image.st_size)
+			if (read == image.st_size)
 				break;
-
 		}
 	}
 
