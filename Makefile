@@ -1,3 +1,4 @@
+all: ext2_cp ext2_mkdir ext2_ln ext2_rm
 
 ext2_cp: ext2_cp.o ext2_helper.o
 	gcc -Wall -g -o ext2_cp $^
