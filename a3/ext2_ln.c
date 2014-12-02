@@ -3,6 +3,9 @@
 #include "ext2.h"
 
 extern char *ext2_image;
+extern int addr_root;
+
+int create_link(char *path, int index);
 
 int main (int argc, char **argv){
 	if (argc != 4){	
@@ -18,7 +21,7 @@ int main (int argc, char **argv){
 	//Find the first directory address by traversing the given path
 	int dir_addr, index;
 	char *temp = argv[2];
-	Inode *dir, *file;
+	Inode *dir;
 
 	if ((dir_addr = traverse_path(temp)) == -1){
 		fprintf(stderr, "The specified path was not found in %s.\n", argv[1]);
@@ -43,14 +46,14 @@ int main (int argc, char **argv){
  * hardlink in the given path to the given inode.
  * Return: 0 if successful, 1 if an error was encountered
  */
-void create_link(char *path, int index){
+int create_link(char *path, int findex){
 	//Finding the directory where the link will be created
 	int dir_addr, index;
 	char *temp = path;
 	Inode *dir, *file;
 
 	if ((dir_addr = traverse_path(temp)) == -1){
-		fprintf(stderr, "The specified path was not found in %s.\n", argv[1]);
+		fprintf(stderr, "The specified path was not found.\n");
 		close_image();
 		return 1;
 	}
@@ -60,20 +63,20 @@ void create_link(char *path, int index){
 
 	//If a file of the same name already exists, we cannot modify its link
 	if ((index = file_exists(dir, temp)) != -1){
-		fprintf(stderr, "The file already exists in %s.\n", argv[1]);
+		fprintf(stderr, "The file already exists.\n");
 		close_image();
 		return 1;
 	}
 
 	//If no existing file, we can make a file entry pointing to the given inode
-	if ((index = mk_file_entry(dir, temp, (char) 0xA00, index) == -1){
-		fprintf(stderr, "Error creating file in %s.\n", argv[1]);
+	if ((index = mk_file_entry(dir, temp, (char) 0xA00, findex)) == -1){
+		fprintf(stderr, "Error creating file.\n");
 		close_image();
 		return 1;
 	}
 
 	//Increment the hard link pointer in the inode to indicate multiple links to data
-	file = (Inode *) &ext2_image[addr_root + index * INODE_SIZE - INODE_SIZE];
+	file = (Inode *) &ext2_image[addr_root + findex * INODE_SIZE - INODE_SIZE];
 	file->hard_links++;
 
 	return 0;
