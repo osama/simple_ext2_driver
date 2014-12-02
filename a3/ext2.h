@@ -12,14 +12,27 @@
 
 #include <stdint.h>
 
+/*These functions are used to map the image file into memory
+and save the changes when the program has finished running.*/
 int read_image(char *filename);
 int close_image();
+
+/*These functions relate to the manipulation of files and directories
+on the image*/
 int traverse_path(char *path);
+int file_exists(Inode *dir, char *filename);
+int mk_file_entry(Inode *dir, char *filename, char type, int index);
+void rm_file_entry(Inode *dir, char *filename);
 
-void unallocated_count(int block_change, int inode_change);
-void update_block_bitmap(int index, int instruction);
-void update_inode_bitmap(int index, int instruction);
+/*These functions are used to manipulate the appropriate bitmaps and
+update counts of free and used inodes and data blocks.*/
+void sb_unallocated_count(int block_change, int inode_change);
+int find_free_block();
+int find_free_inode();
+void toggle_data_bitmap(int index);
+void toggle_inode_bitmap(int index);
 
+//This struct is used to obtain and modify needed information in the superblock.
 typedef struct __attribute__((__packed__)) superblock{
     uint32_t total_inodes;
     uint32_t total_blocks;
@@ -42,6 +55,7 @@ typedef struct __attribute__((__packed__)) superblock{
     //Rest of superblock is not relevant to this Assignment
 } Superblock;
 
+//This struct is used to read and modify block group descriptors.
 typedef struct __attribute__((__packed__)) block_group{
     uint32_t addr_block_usage;      //Block address of block usage bitmap
     uint32_t addr_inode_usage;      //Block address of inode usage bitmap
@@ -51,6 +65,7 @@ typedef struct __attribute__((__packed__)) block_group{
     uint16_t dir;                   //Number of directories in group
 } Block_group;
 
+//This struct represents information contained within inodes.
 typedef struct __attribute__((__packed__)) inode{
     uint16_t mode;                  //Type and permissions
     uint16_t uid;                   //User ID
@@ -81,6 +96,7 @@ typedef struct __attribute__((__packed__)) inode{
     uint32_t osval2;
 } Inode;
 
+//This struct is used to read and traverse directory entries.
 typedef struct __attribute__((__packed__)) dir_entry{
     uint32_t inode;
     uint16_t size;
