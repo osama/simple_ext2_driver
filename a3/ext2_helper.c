@@ -7,6 +7,7 @@
 
 #include "ext2.h"
 
+const int debug = 0;		//Used to print debug messages
 
 unsigned char *ext2_image;	//Points to the mapped data from the image file
 int fd, addr_root = -1;		//File descriptor for file image and the root inode's address
@@ -48,34 +49,54 @@ void close_image(){
 
 /* This function takes a Linux filepath and uses it to traverse the specified image.*/
 int traverse_path(char *path){
-	int index = -1, taken = 0, steps, i, lookup = root;
+	int index = -1, taken = 0, steps, i;
 	Inode *walk;
 	char *buffer = NULL, *tmp = path;
 
-	for (steps=0; tmp[steps]; s[steps]=='/' ? steps++ : *tmp++);
+	//Calculating number of steps needed to reach the required destination
+	for (steps=0; tmp[steps]; tmp++){
+		if (tmp[steps] == '/')
+			steps++;
+	}
 	
+	//Calculating the byte address of the root inode if it hasn't been found yet
 	if (addr_root == -1){
-		Block_group *bgr = (Block_group *) &ext2_image[BLOCK_SIZE*ROOT_BLOCK];
-		addr_root = bgr->addr_inode_table + INODE_SIZE;
+		//The block group descriptor table is always the third data block in the image
+		Block_group *bgr = (Block_group *) &ext2_image[BLOCK_SIZE*2];
+		addr_root = bgr->addr_inode_table + INODE_SIZE;	//The root inode is always the second
+
+		if (debug){
+			printf("Root address: %d\n", addr_root);
+		}
 	}
 
+	//The path walk starts at the root inode
 	walk = (Inode *) &ext2_image[addr_root];
 
-	int next;
-
 	tmp = path
-	buffer = strtok (tmp, "/");
+	buffer = strtok (tmp, "/");	//The first '/' represents the root so we will discard it
   	for (i = 0; i < steps; i++){
-  		buffer = strtok (NULL, "/");
+  		buffer = strtok (NULL, "/");	//Finds the next filename to find
 
+  		if (debug){
+  			printf("Current path walk: %s  Remaining: &s\n", buffer, tmp);
+  		}
+
+  		//If the given file exists, we can continue
   		int next = file_exists(walk, buffer);
 
   		if (next == -1 || i == steps - 1){
-  			index = next;
+  			index = next;	//If the file is found, it is set as the index
   			break;
   		}
 
+  		//If the given directory is found, its inode is set as the current 
   		walk = (Inode *) &ext2_image[addr_root + next * INODE_SIZE - INODE_SIZE];
+
+  		if (debug){
+  			printf("Current inode: %d\n", addr_root + next -1);
+  			printf(" Address: %d\n", addr_root + next * INODE_SIZE - INODE_SIZE);
+  		}
 
   	}
 
@@ -90,22 +111,31 @@ int file_exists(Inode *dir, char *filename){
 
 	for(i = 0; i < 12; i++){
 		if (!dir->db[i])
-			break;
+			break;		//If the data block is not being used, nothing was found
 
 		int crossed = 0;
 		int dblock = dir->db[i] * BLOCK_SIZE;
-	  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
+	  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];	//Loading current directory
+
+	  	if (debug){
+	  		printf("Current Dir Entry: %s\n", dentry->name);
+	  	}
 	
+		//Search while the data entries are not null and 
+		//the end of the data block has not been reached
 	  	while (*dentry && crossed < BLOCK_SIZE){
+	  		//If a directory entry matches the provided filename, we can obtain its index
 	  		if (!strncmp(&dentry->name, filename, dentry->name_length)){
 	  			index = dentry->inode;
 	  			break;
 	  		}
 	  		
+	  		//If nothing has been found, proceed to the next directory entry
 	  		crossed += dentry->size;
 	  		dentry += dentry->size;
 	  	}
 
+	  	//If the index has been set, the loop can exit
 	  	if (index != -1)
 	  		break;
 	  }
@@ -117,35 +147,56 @@ int file_exists(Inode *dir, char *filename){
  * and uses this information to create a file entry in the given directory.
  */
 int mk_file_entry(Inode *dir, char *filename, char type, int index){
-	int i;
+	int i, done = 0;
+	short totalsize = strlen(filename) + 10;	//Size of the new entry
 	Dir_entry *dentry = -1;
 
+	//If there is no existing index to match to, try to find a free inode
 	if (index == -1){
 	  	index = find_free_inode();
 
+	  	//If we can't find more inodes, there is no need to create the entry
 	  	if (index == -1){
 	  		return index;
 	  	}
 	}
 
 	for(i = 0; i < 12; i++){
-		if (!dir->db[i])
-			break;
+		if (!dir->db[i]){	//If the directory data block is unused, allocate a new one
+			dir->db[i] = find_free_block();
+			done = 1;		//If we have allocated a free block, no repeat needed
+			
+			//If no data block was found, reset address
+			if (dir->db[i] == -1){
+				dir->db[i] = 0;
+				sb_unallocated_count(-1, 0);
+			}
+		}
 
 		int crossed = 0;
 		int dblock = dir->db[i] * BLOCK_SIZE;
 	  	dentry = (Dir_entry *) &ext2_image[dblock];
-	
+
+	  	if (debug){
+	  		printf("Current Dir Entry: %s\n", dentry->name);
+	  	}
+		
+		//Keep traversing until an empty space is found in the data block
 	  	while (*dentry && crossed < BLOCK_SIZE){	  		
 	  		crossed += dentry->size;
-	  		dentry += dentry->size;
+
+	  		//If there is empty space in the current data block large enough
+	  		if (crossed < BLOCK_SIZE - totalsize){
+	  			dentry += dentry->size;
+	  		}
 	  	}
 
 	  }
 
+	  //Set values of the new directory entry
 	  if (index != -1){
 	  	dentry->inode = (uint32_t) index;
-		dentry->size = (uint16_t) strlen(filename) + 10;
+		dentry->size = (uint16_t) totalsize;
 		dentry->name_length = (char) strlen(filename);
 		dentry->type = type;
 		strncpy(dentry->name, filename, (int) dentry->name_length + 1);
@@ -160,14 +211,16 @@ void rm_file_entry(Inode *dir, char *filename){
 	int i = 0;
 
 	for(i = 0; i < 12; i++){
-		if (!dir->db[i])
+		if (!dir->db[i])	//If the directory data block is unused, no match
 			break;
 
+		//Set the data block containing directory entries
 		int crossed = 0;
 		int dblock = dir->db[i] * BLOCK_SIZE;
 	  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
 	
 	  	while (*dentry && crossed < BLOCK_SIZE){
+	  		//If the directory entry matches, reset all values
 	  		if (!strncmp(&dentry->name, filename, dentry->name_length)){
 				dentry->inode = 0;
 				dentry->size = 0;
@@ -177,6 +230,7 @@ void rm_file_entry(Inode *dir, char *filename){
 	  			return;
 	  		}
 	  		
+	  		//Move onto the next entry in the data block
 	  		crossed += dentry->size;
 	  		dentry += dentry->size;
 	  	}
@@ -187,9 +241,11 @@ void rm_file_entry(Inode *dir, char *filename){
  * inodes in the superblock and the block descriptor table.
  */ 
 void sb_unallocated_count(int block_change, int inode_change){
+	//Find the superblock and the block group descriptor table
 	Superblock *sb = (Superblock *) &ext2_image[BLOCK_SIZE];
 	Block_group *bgr = (Block_group *) &ext2_image[BLOCK_SIZE*2];
 
+	//Modify unallocated block and inode values as specified
 	sb->unallocated_blocks += block_change;
 	sb->unallocated_inodes += inode_change;
 
@@ -209,18 +265,21 @@ int find_free_block(){
 		return -1;
 	}
 
+	//Go through all of the bytes in the bitmap
 	for (int c = 0; c < 16 && !found; c++){
 		char test = ext2_image[bitmap_addr + c];
 		int found = 0;
 
+		//Go through each bit in the byte
 		for (int d = 0; d < 8 && !found; d++){
+			//Check value of bit and trigger if it is unset
 			if (!(test & (1 << d))){
 				free_index = 8 - d + c * 8;
 			}
 		}
 	}
 
-	toggle_data_bitmap(free_index);
+	toggle_data_bitmap(free_index);	//Toggle the bit to indicate that it's taken
 	return free_index;
 }
 
@@ -236,18 +295,21 @@ int find_free_inode(){
 		return -1;
 	}
 
+	//Go through all of the bytes in the bitmap
 	for (int c = 0; c < 2 && !found; c++){
 		char test = ext2_image[bitmap_addr + c];
 		int found = 0;
 
+		//Go through each bit in the byte
 		for (int d = 0; d < 8 && !found; d++){
+			//Check value of bit and trigger if it is unset
 			if (!(test & (1 << d))){
 				free_index = 8 - d + c * 8;
 			}
 		}
 	}
 
-	toggle_inode_bitmap(free_index);
+	toggle_inode_bitmap(free_index); //Toggle the bit to indicate that it's taken
 	return free_index;
 }
 
@@ -257,6 +319,7 @@ void toggle_data_bitmap(int index){
 	Block_group *bgr = &ext2_image[BLOCK_SIZE*2];
 	int bitmap_addr = BLOCK_SIZE * bgr->addr_block_usage;
 
+	//C represents the byte to check and d represents the bit
 	int c = index/8, d = 8 - index + c * 8;
 
 	ext2_image[bitmap_addr + c]	^= 1 << d;
@@ -268,6 +331,7 @@ void toggle_inode_bitmap(int index){
 	Block_group *bgr = &ext2_image[BLOCK_SIZE*2];
 	int bitmap_addr = BLOCK_SIZE * bgr->addr_inode_usage;
 
+	//C represents the byte to check and d represents the bit
 	int c = index/8, d = 8 - index + c * 8;
 
 	ext2_image[bitmap_addr + c]	^= 1 << d;
