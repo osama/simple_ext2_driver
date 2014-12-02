@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "ext2.h"
 
 extern char *ext2_image;
@@ -43,10 +44,25 @@ int main (int argc, char **argv){
 	int i, count = 0;
 
 	for (i = 0; i < 12; i++){
-		if (!db[i]){
-			toggle_data_bitmap(db[i]);
+		if (!file->db[i]){
+			toggle_data_bitmap(file->db[i]);
 			count++;
 		}
+	}
+
+	if (file->db_singly){
+		uint32_t *data = ext2_image[BLOCK_SIZE * file->db_singly];
+		
+		for (i = 0; i < 256; i++){
+			if (data[i]){
+				toggle_data_bitmap(data[i]);
+				count++;
+			} else{
+				break;
+			}
+		}
+
+		toggle_data_bitmap(db_singly);
 	}
 
 	toggle_inode_bitmap(index);
