@@ -8,17 +8,21 @@
 #include "ext2.h"
 
 
-unsigned char *ext2_image;
-int fd, addr_root = -1;
-struct stat image;
+unsigned char *ext2_image;	//Points to the mapped data from the image file
+int fd, addr_root = -1;		//File descriptor for file image and the root inode's address
+struct stat image;			//Information relating to the provided image file
 
+/* This function is used to read the binary data from a provided
+ * file. This data is mapped into memory and read with the use
+ * of the global variable ext2_image.
+ */
 int read_image(char *filename){
 	if ((fd = open(filename, O_RDWR)) == -1) {
         perror("Opening image");
         return 1;
     }
 
-    fstat(fd, &image);
+    fstat(fd, &image);	//Obtain file information to read filesize
 
     ext2_image = mmap(NULL, image.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)
 
@@ -30,6 +34,8 @@ int read_image(char *filename){
     return 0;
 }
 
+/* This function closes the memory mapping, thus saving all modified information.
+ */
 void close_image(){
 	if (munmap(ext2_image, image.st_size)){
 		perror("Updating image");
@@ -40,6 +46,7 @@ void close_image(){
 	}
 }
 
+/* This function takes a Linux filepath and uses it to traverse the specified image.*/
 int traverse_path(char *path){
 	int index = -1, taken = 0, steps, i, lookup = root;
 	Inode *walk;
@@ -75,6 +82,9 @@ int traverse_path(char *path){
 	return index;
 }
 
+/* Given a filename and a directory, this function checks if the file already
+ * exists in the provided directory.
+ */
 int file_exists(Inode *dir, char *filename){
 	int index = -1, i;
 
@@ -103,6 +113,9 @@ int file_exists(Inode *dir, char *filename){
   	return index;
 }
 
+/* This function takes a directory, a filename, a type, and an inode index
+ * and uses this information to create a file entry in the given directory.
+ */
 int mk_file_entry(Inode *dir, char *filename, char type, int index){
 	int i;
 	Dir_entry *dentry = -1;
@@ -141,6 +154,8 @@ int mk_file_entry(Inode *dir, char *filename, char type, int index){
   	return index;
 }
 
+/* This function removes the given filename's entry from the given directory.
+ */
 void rm_file_entry(Inode *dir, char *filename){
 	int i = 0;
 
@@ -168,6 +183,9 @@ void rm_file_entry(Inode *dir, char *filename){
 	  }
 }
 
+/* This function modifies the counts for unallocated blocks and
+ * inodes in the superblock and the block descriptor table.
+ */ 
 void sb_unallocated_count(int block_change, int inode_change){
 	Superblock *sb = (Superblock *) &ext2_image[BLOCK_SIZE];
 	Block_group *bgr = (Block_group *) &ext2_image[BLOCK_SIZE*2];
@@ -179,10 +197,9 @@ void sb_unallocated_count(int block_change, int inode_change){
 	bgr->unallocated_inodes += inode_change;
 }
 
-char *interpret_bitmap(int index){
-	char *result = malloc(sizeof(char) * BLOCK_SIZE);
-}
-
+/* This function checks for an unset bit in the free block bitmap
+ * and returns the appropriate block index.
+ */
 int find_free_block(){
 	Block_group *bgr = &ext2_image[BLOCK_SIZE*2];
 	int bitmap_addr = BLOCK_SIZE * bgr->addr_block_usage;
@@ -207,6 +224,9 @@ int find_free_block(){
 	return free_index;
 }
 
+/* This function checks for an unset bit in the free inode bitmap
+ * and returns the appropriate block index.
+ */
 int find_free_inode(){
 	Block_group *bgr = &ext2_image[BLOCK_SIZE*2];
 	int bitmap_addr = BLOCK_SIZE * bgr->addr_inode_usage;
@@ -231,6 +251,8 @@ int find_free_inode(){
 	return free_index;
 }
 
+/* This function toggles the given bit in the free block bitmap.
+ */
 void toggle_data_bitmap(int index){
 	Block_group *bgr = &ext2_image[BLOCK_SIZE*2];
 	int bitmap_addr = BLOCK_SIZE * bgr->addr_block_usage;
@@ -240,6 +262,8 @@ void toggle_data_bitmap(int index){
 	ext2_image[bitmap_addr + c]	^= 1 << d;
 }
 
+/* This function toggles the given bit in the free inode bitmap.
+ */
 void toggle_inode_bitmap(int index){
 	Block_group *bgr = &ext2_image[BLOCK_SIZE*2];
 	int bitmap_addr = BLOCK_SIZE * bgr->addr_inode_usage;
