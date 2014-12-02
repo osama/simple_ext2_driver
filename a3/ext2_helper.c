@@ -147,7 +147,7 @@ int file_exists(Inode *dir, char *filename){
  * and uses this information to create a file entry in the given directory.
  */
 int mk_file_entry(Inode *dir, char *filename, char type, int index){
-	int i, done = 0;
+	int i, done = 0, toalcrossed = 0;
 	short totalsize = strlen(filename) + 10;	//Size of the new entry
 	Dir_entry *dentry = -1;
 
@@ -187,16 +187,19 @@ int mk_file_entry(Inode *dir, char *filename, char type, int index){
 
 	  		//If there is empty space in the current data block large enough
 	  		if (crossed < BLOCK_SIZE - totalsize){
-	  			dentry += dentry->size;
+	  			dentry +=  8 + dentry->name_length;
 	  		}
 	  	}
+
+	  	//The size of the data entry 
+	  	totalcrossed = BLOCKSIZE - crossed
 
 	  }
 
 	  //Set values of the new directory entry
 	  if (index != -1){
 	  	dentry->inode = (uint32_t) index;
-		dentry->size = (uint16_t) totalsize;
+		dentry->size = (uint16_t) totalcrossed;
 		dentry->name_length = (char) strlen(filename);
 		dentry->type = type;
 		strncpy(dentry->name, filename, (int) dentry->name_length + 1);
