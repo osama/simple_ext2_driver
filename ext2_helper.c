@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <linux/limits.h>
@@ -20,16 +22,16 @@ struct stat image;			//Information relating to the provided image file
 int read_image(char *filename){
 	if ((fd = open(filename, O_RDWR)) == -1) {
         perror("Opening image");
-        return 1;
+        return -1;
     }
 
     fstat(fd, &image);	//Obtain file information to read filesize
 
-    ext2_image = mmap(NULL, image.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)
+    ext2_image = mmap(NULL, image.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 
-    if (ext_image = MAP_FAILED){
+    if (ext2_image == MAP_FAILED){
     	perror("Mapping image");
-    	return 1;
+    	return -1;
     }
 
     return 0;
@@ -49,7 +51,7 @@ void close_image(){
 
 /* This function takes a Linux filepath and uses it to traverse the specified image.*/
 int traverse_path(char *path){
-	int index = -1, taken = 0, steps, i;
+	int index = -1, steps, i;
 	Inode *walk;
 	char *buffer = NULL, *tmp = path;
 
@@ -73,13 +75,13 @@ int traverse_path(char *path){
 	//The path walk starts at the root inode
 	walk = (Inode *) &ext2_image[addr_root];
 
-	tmp = path
+	tmp = path;
 	buffer = strtok (tmp, "/");	//The first '/' represents the root so we will discard it
   	for (i = 0; i < steps; i++){
   		buffer = strtok (NULL, "/");	//Finds the next filename to find
 
   		if (debug){
-  			printf("Current path walk: %s  Remaining: &s\n", buffer, tmp);
+  			printf("Current path walk: %s  Remaining: %s\n", buffer, tmp);
   		}
 
   		//If the given file exists, we can continue
@@ -123,9 +125,9 @@ int file_exists(Inode *dir, char *filename){
 	
 		//Search while the data entries are not null and 
 		//the end of the data block has not been reached
-	  	while (*dentry && crossed < BLOCK_SIZE){
+	  	while (dentry->inode && crossed < BLOCK_SIZE){
 	  		//If a directory entry matches the provided filename, we can obtain its index
-	  		if (!strncmp(&dentry->name, filename, dentry->name_length)){
+	  		if (!strncmp(dentry->name, filename, dentry->name_length)){
 	  			index = dentry->inode;
 	  			break;
 	  		}
@@ -147,9 +149,9 @@ int file_exists(Inode *dir, char *filename){
  * and uses this information to create a file entry in the given directory.
  */
 int mk_file_entry(Inode *dir, char *filename, char type, int index){
-	int i, done = 0, toalcrossed = 0;
+	int i, done = 0, totalcrossed = 0;
 	short totalsize = strlen(filename) + 10;	//Size of the new entry
-	Dir_entry *dentry = -1;
+	Dir_entry *dentry;
 
 	//If there is no existing index to match to, try to find a free inode
 	if (index == -1){
@@ -161,7 +163,7 @@ int mk_file_entry(Inode *dir, char *filename, char type, int index){
 	  	}
 	}
 
-	for(i = 0; i < 12; i++){
+	for(i = 0; i < 12 && !done; i++){
 		if (!dir->db[i]){	//If the directory data block is unused, allocate a new one
 			dir->db[i] = find_free_block();
 			done = 1;		//If we have allocated a free block, no repeat needed
@@ -182,7 +184,7 @@ int mk_file_entry(Inode *dir, char *filename, char type, int index){
 	  	}
 		
 		//Keep traversing until an empty space is found in the data block
-	  	while (*dentry && crossed < BLOCK_SIZE){	  		
+	  	while (dentry->inode && crossed < BLOCK_SIZE){	  		
 	  		crossed += dentry->size;
 
 	  		//If there is empty space in the current data block large enough
@@ -192,7 +194,7 @@ int mk_file_entry(Inode *dir, char *filename, char type, int index){
 	  	}
 
 	  	//The size of the data entry 
-	  	totalcrossed = BLOCKSIZE - crossed
+	  	totalcrossed = BLOCK_SIZE - crossed;
 
 	  }
 
@@ -222,14 +224,13 @@ void rm_file_entry(Inode *dir, char *filename){
 		int dblock = dir->db[i] * BLOCK_SIZE;
 	  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
 	
-	  	while (*dentry && crossed < BLOCK_SIZE){
+	  	while (dentry->inode && crossed < BLOCK_SIZE){
 	  		//If the directory entry matches, reset all values
-	  		if (!strncmp(&dentry->name, filename, dentry->name_length)){
+	  		if (!strncmp(dentry->name, filename, dentry->name_length)){
 				dentry->inode = 0;
 				dentry->size = 0;
 				dentry->name_length = 0;
 				dentry->type = 0;
-				dentry->name = 0;
 	  			return;
 	  		}
 	  		
@@ -260,24 +261,24 @@ void sb_unallocated_count(int block_change, int inode_change){
  * and returns the appropriate block index.
  */
 int find_free_block(){
-	Block_group *bgr = &ext2_image[BLOCK_SIZE*2];
+	Block_group *bgr = (Block_group *) &ext2_image[BLOCK_SIZE*2];
 	int bitmap_addr = BLOCK_SIZE * bgr->addr_block_usage;
-	int free_index == -1, c, d;
+	int free_index = -1, c, d, found = 0;
 
 	if (bgr->unallocated_blocks <= 0){
 		return -1;
 	}
 
 	//Go through all of the bytes in the bitmap
-	for (int c = 0; c < 16 && !found; c++){
+	for (c = 0; c < 16 && !found; c++){
 		char test = ext2_image[bitmap_addr + c];
-		int found = 0;
 
 		//Go through each bit in the byte
-		for (int d = 0; d < 8 && !found; d++){
+		for (d = 0; d < 8 && !found; d++){
 			//Check value of bit and trigger if it is unset
 			if (!(test & (1 << d))){
 				free_index = 8 - d + c * 8;
+				found = 1;
 			}
 		}
 	}
@@ -290,24 +291,24 @@ int find_free_block(){
  * and returns the appropriate block index.
  */
 int find_free_inode(){
-	Block_group *bgr = &ext2_image[BLOCK_SIZE*2];
+	Block_group *bgr = (Block_group *) &ext2_image[BLOCK_SIZE*2];
 	int bitmap_addr = BLOCK_SIZE * bgr->addr_inode_usage;
-	int free_index == -1, c, d;
+	int free_index = -1, c, d, found = 0;
 
 	if (bgr->unallocated_inodes <= 0){
 		return -1;
 	}
 
 	//Go through all of the bytes in the bitmap
-	for (int c = 0; c < 2 && !found; c++){
+	for (c = 0; c < 2 && !found; c++){
 		char test = ext2_image[bitmap_addr + c];
-		int found = 0;
 
 		//Go through each bit in the byte
-		for (int d = 0; d < 8 && !found; d++){
+		for (d = 0; d < 8 && !found; d++){
 			//Check value of bit and trigger if it is unset
 			if (!(test & (1 << d))){
 				free_index = 8 - d + c * 8;
+				found = 1;
 			}
 		}
 	}
@@ -319,7 +320,7 @@ int find_free_inode(){
 /* This function toggles the given bit in the free block bitmap.
  */
 void toggle_data_bitmap(int index){
-	Block_group *bgr = &ext2_image[BLOCK_SIZE*2];
+	Block_group *bgr = (Block_group *) &ext2_image[BLOCK_SIZE*2];
 	int bitmap_addr = BLOCK_SIZE * bgr->addr_block_usage;
 
 	//C represents the byte to check and d represents the bit
@@ -331,7 +332,7 @@ void toggle_data_bitmap(int index){
 /* This function toggles the given bit in the free inode bitmap.
  */
 void toggle_inode_bitmap(int index){
-	Block_group *bgr = &ext2_image[BLOCK_SIZE*2];
+	Block_group *bgr = (Block_group *) &ext2_image[BLOCK_SIZE*2];
 	int bitmap_addr = BLOCK_SIZE * bgr->addr_inode_usage;
 
 	//C represents the byte to check and d represents the bit
