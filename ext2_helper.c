@@ -9,7 +9,7 @@
 
 #include "ext2.h"
 
-const int debug = 0;		//Used to print debug messages
+const int debug = 1;		//Used to print debug messages
 
 unsigned char *ext2_image;	//Points to the mapped data from the image file
 int fd, addr_root = -1;		//File descriptor for file image and the root inode's address
