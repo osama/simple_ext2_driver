@@ -38,7 +38,7 @@ int main (int argc, char **argv){
 	}
 
 	//Making a directory entry as another directory
-	if ((index = mk_file_entry(dir, temp, (char) 0x400), -1) == -1){
+	if ((index = mk_file_entry(dir, temp, (char) 0x400, -1)) == -1){
 		fprintf(stderr, "Error creating file in %s.\n", argv[1]);
 		close_image();
 		return 1;
@@ -66,7 +66,7 @@ int main (int argc, char **argv){
 	}
 
 	//Modifying . and .. pointers to suit the new directory
-	uint32_t *current = &ext2_image[data_index], *parent = &ext2_image[data_index + 12]
+	uint32_t *current = (uint32_t *) &ext2_image[data_index], *parent = &ext2_image[data_index + 12]
 	*current = data_index;
 	*parent = dir_addr;
 
