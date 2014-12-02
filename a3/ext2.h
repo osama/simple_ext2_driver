@@ -88,7 +88,7 @@ typedef struct __attribute__((__packed__)) dir_entry{
 /*These functions are used to map the image file into memory
 and save the changes when the program has finished running.*/
 int read_image(char *filename);
-int close_image();
+void close_image();
 
 /*These functions relate to the manipulation of files and directories
 on the image*/
