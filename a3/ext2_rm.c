@@ -29,7 +29,7 @@ int main (int argc, char **argv){
 	}
 
 	//Set the directory inode
-	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - INODE_SIZE];
+	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 
 	//Check if the file exists in the given directory
 	if ((index = file_exists(dir, temp)) == -1){
@@ -39,7 +39,7 @@ int main (int argc, char **argv){
 	}
 
 	//Set file's inode
-	file = (Inode *) &ext2_image[addr_root + index * INODE_SIZE - INODE_SIZE];
+	file = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 	rm_file_entry(dir, temp);	//Remove file entry from the directory
 	file->hard_links--;			//Decrement the number of links to file's inode
 

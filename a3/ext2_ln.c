@@ -30,7 +30,7 @@ int main (int argc, char **argv){
 	}
 
 	//Find the inode for the directory in which the file to be linked resides
-	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - INODE_SIZE];
+	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 
 	//Check if the file to be linked exists
 	if ((index = file_exists(dir, temp)) == -1){
@@ -59,7 +59,7 @@ int create_link(char *path, int findex){
 	}
 
 	//Setting the directory's inode
-	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - INODE_SIZE];
+	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 
 	//If a file of the same name already exists, we cannot modify its link
 	if ((index = file_exists(dir, temp)) != -1){
@@ -76,7 +76,7 @@ int create_link(char *path, int findex){
 	}
 
 	//Increment the hard link pointer in the inode to indicate multiple links to data
-	file = (Inode *) &ext2_image[addr_root + findex * INODE_SIZE - INODE_SIZE];
+	file = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 	file->hard_links++;
 
 	return 0;
