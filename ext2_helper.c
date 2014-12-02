@@ -9,7 +9,7 @@
 
 #include "ext2.h"
 
-const int debug = 1;		//Used to print debug messages
+const int debug = 12;		//Used to print debug messages
 
 unsigned char *ext2_image;	//Points to the mapped data from the image file
 int fd, addr_root = -1;		//File descriptor for file image and the root inode's address
@@ -60,14 +60,18 @@ int traverse_path(char *path){
 		if (tmp[steps] == '/')
 			steps++;
 	}
+
+	//Decrement steps by one to remove root node
+	steps--;
 	
 	//Calculating the byte address of the root inode if it hasn't been found yet
 	if (addr_root == -1){
 		//The block group descriptor table is always the third data block in the image
 		Block_group *bgr = (Block_group *) &ext2_image[BLOCK_SIZE*2];
-		addr_root = bgr->addr_inode_table + INODE_SIZE;	//The root inode is always the second
+		addr_root = bgr->addr_inode_table * BLOCK_SIZE + INODE_SIZE;	//The root inode is always the second
 
 		if (debug){
+			printf("Inode table: %d\n", bgr->addr_inode_table * BLOCK_SIZE);
 			printf("Root address: %d\n", addr_root);
 		}
 	}
@@ -100,6 +104,11 @@ int traverse_path(char *path){
   			printf(" Address: %d\n", addr_root + next * INODE_SIZE - INODE_SIZE);
   		}
 
+  	}
+
+  	//If there were zero steps to be taken, the root node is the index
+  	if (!steps){
+  		index = ROOT_BLOCK;
   	}
 
 	return index;
@@ -173,6 +182,10 @@ int mk_file_entry(Inode *dir, char *filename, char type, int index){
 				dir->db[i] = 0;
 				sb_unallocated_count(-1, 0);
 			}
+		}
+
+		if (debug){
+			printf("Current data block: %d\n", dir->db[i]);
 		}
 
 		int crossed = 0;

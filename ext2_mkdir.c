@@ -4,6 +4,7 @@
 
 extern char *ext2_image;
 extern int addr_root;
+extern int debug;
 
 int main (int argc, char **argv){
 	if (argc != 3){	
@@ -28,7 +29,11 @@ int main (int argc, char **argv){
 	}
 
 	//Find the inode for the directory where we will be making a new directory
-	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - INODE_SIZE];
+	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
+
+	if (debug){
+		printf(" Directory inode: %d\n", addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE);
+	}
 
 	//If a file with the directory's name already exists, we cannot overwrite it
 	if ((index = file_exists(dir, temp)) != -1){
@@ -45,7 +50,7 @@ int main (int argc, char **argv){
 	}
 
 	//Accessing the new directory's inode to add information
-	file = (Inode *) &ext2_image[addr_root + index * INODE_SIZE - INODE_SIZE];
+	file = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 	//TODO: Write Inode properly
 	file->db[0] = find_free_block();
 
