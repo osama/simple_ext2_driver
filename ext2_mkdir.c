@@ -66,9 +66,10 @@ int main (int argc, char **argv){
 	}
 
 	//Modifying . and .. pointers to suit the new directory
-	uint32_t *current = (uint32_t *) &ext2_image[data_index], *parent = &ext2_image[data_index + 12]
-	*current = data_index;
-	*parent = dir_addr;
+	uint32_t *current = (uint32_t *) &ext2_image[data_index];
+	uint32_t *parent = (uint32_t *) &ext2_image[data_index + 12]
+	current[0] = data_index;
+	parent[0] = dir_addr;
 
 	//Modifying the count of unallocated data blocks and inodes
 	sb_unallocated_count(-1, -1);
