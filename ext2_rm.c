@@ -60,7 +60,7 @@ int main (int argc, char **argv){
 
 	//If the file is using its singly indirect pointer, deallocate additional data
 	if (file->db_singly){
-		uint32_t *data = ext2_image[BLOCK_SIZE * file->db_singly];
+		uint32_t *data = (uint32_t *) &ext2_image[BLOCK_SIZE * file->db_singly];
 		
 		for (i = 0; i < 256; i++){
 			if (data[i]){
@@ -71,7 +71,7 @@ int main (int argc, char **argv){
 			}
 		}
 		//Deallocate the data block holding the singly indirect
-		toggle_data_bitmap(db_singly);
+		toggle_data_bitmap(file->db_singly);
 	}
 
 	//Deallocate the file's inode
