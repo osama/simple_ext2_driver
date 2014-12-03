@@ -160,7 +160,7 @@ int file_exists(Inode *dir, char *filename){
 int mk_file_entry(Inode *dir, char *filename, char type, int index){
 	int i, done = 0, totalcrossed = 0;
 	short totalsize = strlen(filename) + 10;	//Size of the new entry
-	Dir_entry *dentry;
+	Dir_entry *dentry, *prev;
 
 	//If there is no existing index to match to, try to find a free inode
 	if (index == -1){
@@ -197,12 +197,19 @@ int mk_file_entry(Inode *dir, char *filename, char type, int index){
 	  	}
 		
 		//Keep traversing until an empty space is found in the data block
-	  	while (dentry->inode && crossed < BLOCK_SIZE){	  		
+	  	while (dentry->inode && crossed < BLOCK_SIZE){	
+			prev = dentry; 
 	  		crossed += dentry->size;
 
 	  		//If there is empty space in the current data block large enough
 	  		if (crossed < BLOCK_SIZE - totalsize){
-	  			dentry +=  8 + dentry->name_length;
+	  			dentry +=  dentry->size;
+	  		}
+
+	  		//If the previous data block was the last block, add a new entry after it
+	  		if (prev->size - prev->name_length - 10 > strlen(filename) + 10){
+	  			dentry = prev->name_length + 10;
+	  			crossed -= (prev->name_length + 10);
 	  		}
 	  	}
 
@@ -213,6 +220,8 @@ int mk_file_entry(Inode *dir, char *filename, char type, int index){
 
 	  //Set values of the new directory entry
 	  if (index != -1){
+	  	prev->size = 10 + prev->name_length;
+
 	  	dentry->inode = (uint32_t) index;
 		dentry->size = (uint16_t) totalcrossed;
 		dentry->name_length = (char) strlen(filename);
@@ -236,17 +245,21 @@ void rm_file_entry(Inode *dir, char *filename){
 		int crossed = 0;
 		int dblock = dir->db[i] * BLOCK_SIZE;
 	  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];
+	  	Dir_entry *prev;
 	
 	  	while (dentry->inode && crossed < BLOCK_SIZE){
+
 	  		//If the directory entry matches, reset all values
 	  		if (!strncmp(dentry->name, filename, dentry->name_length)){
+	  			prev->size += dentry->size;
 				dentry->inode = 0;
 				dentry->size = 0;
 				dentry->name_length = 0;
 				dentry->type = 0;
 	  			return;
 	  		}
-	  		
+
+	  		prev = dentry;
 	  		//Move onto the next entry in the data block
 	  		crossed += dentry->size;
 	  		dentry += dentry->size;
@@ -297,7 +310,7 @@ int find_free_block(){
 	}
 
 	toggle_data_bitmap(free_index);	//Toggle the bit to indicate that it's taken
-	return free_index;
+	return free_index - 1;	//The count for data blocks starts at 0
 }
 
 /* This function checks for an unset bit in the free inode bitmap

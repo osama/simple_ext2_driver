@@ -68,7 +68,7 @@ int main (int argc, char **argv){
 		return 1;
 	}
 
-	if ((index = mk_file_entry(dir, temp, (char) 0x800, -1)) == -1){
+	if ((index = mk_file_entry(dir, temp, (char) 1, -1)) == -1){
 		fprintf(stderr, "Error creating file in %s.\n", argv[1]);
 		close_image();
 		return 1;
@@ -99,7 +99,7 @@ int main (int argc, char **argv){
 			if (read == image.st_size)
 				break;
 
-			ext2_image[BLOCK_SIZE *file->db[i] - BLOCK_SIZE + written] = lfile[read];
+			ext2_image[BLOCK_SIZE *file->db[i] + written] = lfile[read];
 			read++;
 			written++;
 		}
@@ -137,7 +137,7 @@ int main (int argc, char **argv){
 				if (read == image.st_size)
 					break;
 
-				ext2_image[BLOCK_SIZE *db[i] - BLOCK_SIZE + written] = lfile[read];
+				ext2_image[BLOCK_SIZE *db[i] + written] = lfile[read];
 				read++;
 				written++;
 			}
