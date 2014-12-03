@@ -43,7 +43,7 @@ int main (int argc, char **argv){
 	}
 
 	//Making a directory entry as another directory
-	if ((index = mk_file_entry(dir, temp, (char) 0x400, -1)) == -1){
+	if ((index = mk_file_entry(dir, temp, (char) 2, -1)) == -1){
 		fprintf(stderr, "Error creating file in %s.\n", argv[1]);
 		close_image();
 		return 1;
@@ -63,7 +63,7 @@ int main (int argc, char **argv){
 	}
 
 	int i;
-	int data_index = BLOCK_SIZE * file->db[0] - BLOCK_SIZE;
+	int data_index = BLOCK_SIZE * file->db[0];
 
 	//Copying over . and .. pointers from root
 	for (i = 0; i < 24; i++){
