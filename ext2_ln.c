@@ -22,10 +22,9 @@ int main (int argc, char **argv){
 
 	//Find the first directory address by traversing the given path
 	int dir_addr, index;
-	char *temp = argv[2];
 	Inode *dir;
 
-	if ((dir_addr = traverse_path(temp)) == -1){
+	if ((dir_addr = traverse_path(argv[2])) == -1){
 		fprintf(stderr, "The specified path was not found in %s.\n", argv[1]);
 		close_image();
 		return 1;
@@ -35,7 +34,7 @@ int main (int argc, char **argv){
 	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 
 	//Check if the file to be linked exists
-	if ((index = file_exists(dir, temp)) == -1){
+	if ((index = file_exists(dir, finalname)) == -1){
 		fprintf(stderr, "The specified file was not found in %s.\n", argv[1]);
 		close_image();
 		return 1;
@@ -51,10 +50,9 @@ int main (int argc, char **argv){
 int create_link(char *path, int findex){
 	//Finding the directory where the link will be created
 	int dir_addr, index;
-	char *temp = path;
 	Inode *dir, *file;
 
-	if ((dir_addr = traverse_path(temp)) == -1){
+	if ((dir_addr = traverse_path(path)) == -1){
 		fprintf(stderr, "The specified path was not found.\n");
 		close_image();
 		return 1;
@@ -64,14 +62,14 @@ int create_link(char *path, int findex){
 	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 
 	//If a file of the same name already exists, we cannot modify its link
-	if ((index = file_exists(dir, temp)) != -1){
+	if ((index = file_exists(dir, finalname)) != -1){
 		fprintf(stderr, "The file already exists.\n");
 		close_image();
 		return 1;
 	}
 
 	//If no existing file, we can make a file entry pointing to the given inode
-	if ((index = mk_file_entry(dir, temp, (char) 0xA00, findex)) == -1){
+	if ((index = mk_file_entry(dir, finalname, (char) 0xA00, findex)) == -1){
 		fprintf(stderr, "Error creating file.\n");
 		close_image();
 		return 1;

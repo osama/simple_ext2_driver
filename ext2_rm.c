@@ -21,10 +21,9 @@ int main (int argc, char **argv){
 
 	//Find the directory address by traversing the given path
 	int dir_addr, index;
-	char *temp = argv[2];
 	Inode *dir, *file;
 
-	if ((dir_addr = traverse_path(temp)) == -1){
+	if ((dir_addr = traverse_path(argv[2])) == -1){
 		fprintf(stderr, "The specified path was not found in %s.\n", argv[1]);
 		close_image();
 		return 1;
@@ -34,7 +33,7 @@ int main (int argc, char **argv){
 	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 
 	//Check if the file exists in the given directory
-	if ((index = file_exists(dir, temp)) == -1){
+	if ((index = file_exists(dir, finalname)) == -1){
 		fprintf(stderr, "The specified file was not found in %s.\n", argv[1]);
 		close_image();
 		return 1;
