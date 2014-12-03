@@ -5,6 +5,8 @@
 extern char *ext2_image;
 extern int addr_root;
 
+char* finalname;
+
 int create_link(char *path, int index);
 
 int main (int argc, char **argv){

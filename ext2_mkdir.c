@@ -6,6 +6,8 @@ extern char *ext2_image;
 extern int addr_root;
 extern int debug;
 
+char* finalname;
+
 int main (int argc, char **argv){
 	if (argc != 3){	
 		printf("usage: ext2_mkdir virtual_disk path\n");
@@ -19,10 +21,9 @@ int main (int argc, char **argv){
 
 	//Find the target directory's address by traversing the given path
 	int dir_addr, index;
-	char *temp = argv[2];
 	Inode *dir, *file;
 
-	if ((dir_addr = traverse_path(temp)) == -1){
+	if ((dir_addr = traverse_path(argv[2])) == -1){
 		fprintf(stderr, "The specified path was not found in %s.\n", argv[1]);
 		close_image();
 		return 1;
@@ -36,29 +37,36 @@ int main (int argc, char **argv){
 	}
 
 	//If a file with the directory's name already exists, we cannot overwrite it
-	if ((index = file_exists(dir, temp)) != -1){
+	if ((index = file_exists(dir, finalname)) != -1){
 		fprintf(stderr, "The file already exists in %s.\n", argv[1]);
 		close_image();
 		return 1;
 	}
 
+	if (debug){
+		printf("File does not already exist.\n");
+	}
+
 	//Making a directory entry as another directory
-	if ((index = mk_file_entry(dir, temp, (char) 2, -1)) == -1){
+	if ((index = mk_file_entry(dir, finalname, (char) 2, -1)) == -1){
 		fprintf(stderr, "Error creating file in %s.\n", argv[1]);
 		close_image();
 		return 1;
 	}
 
 	//Accessing the new directory's inode to add information
-	file = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
+	file = (Inode *) &ext2_image[addr_root + index * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 	//TODO: Write Inode properly
 	file->db[0] = find_free_block();
+
+	if (debug)
+		printf("New dir's inode byte: %d\n", addr_root + index * INODE_SIZE - ROOT_BLOCK * INODE_SIZE);
 
 	//If there are no data blocks available, perform cleanup
 	if (file->db[0] == -1){
 		fprintf(stderr, "No more space for new file or directory.\n");
 		toggle_inode_bitmap(index);
-		rm_file_entry(dir, temp);
+		rm_file_entry(dir, finalname);
 		return 1;
 	}
 
@@ -73,8 +81,8 @@ int main (int argc, char **argv){
 	//Modifying . and .. pointers to suit the new directory
 	uint32_t *current = (uint32_t *) &ext2_image[data_index];
 	uint32_t *parent = (uint32_t *) &ext2_image[data_index + 12];
-	current[0] = data_index;
-	parent[0] = dir_addr;
+	*current = index;
+	*parent = dir_addr;
 
 	//Modifying the count of unallocated data blocks and inodes
 	sb_unallocated_count(-1, -1);

@@ -10,8 +10,8 @@
 
 extern char *ext2_image;
 extern int addr_root;
-char *file;
 struct stat image;
+char* finalname;
 
 int main (int argc, char **argv){
 	char *filename = argv[2], *lfile;
@@ -41,7 +41,7 @@ int main (int argc, char **argv){
 
     close(fd);	//Closing local file's file descriptor
 
-    if (file == MAP_FAILED){
+    if (lfile == MAP_FAILED){
     	perror("Mapping local image");
     	close_image();
     	return 1;
