@@ -151,6 +151,8 @@ int file_exists(Inode *dir, char *filename){
 
 	  		//If a directory entry matches the provided filename, we can obtain its index
 	  		if (!strncmp(dentry->name, filename, dentry->name_length)){
+	  			if (debug)
+	  				printf("Found!\n");
 	  			index = dentry->inode;
 	  			break;
 	  		}
@@ -273,9 +275,15 @@ void rm_file_entry(Inode *dir, char *filename){
 	  	Dir_entry *prev;
 	
 	  	while (dentry->inode && crossed < BLOCK_SIZE){
+	  		if (debug){
+	  			printf("RM - Current Dir Entry: %s\n", dentry->name);
+	  		}
 
 	  		//If the directory entry matches, reset all values
 	  		if (!strncmp(dentry->name, filename, dentry->name_length)){
+	  			if(debug)
+	  				printf("RM - Found!\n");
+
 	  			prev->size += dentry->size;
 				dentry->inode = 0;
 				dentry->size = 0;
