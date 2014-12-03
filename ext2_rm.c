@@ -41,8 +41,8 @@ int main (int argc, char **argv){
 
 	//Set file's inode
 	file = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
-	rm_file_entry(dir, temp);	//Remove file entry from the directory
-	file->hard_links--;			//Decrement the number of links to file's inode
+	rm_file_entry(dir, finalname);	//Remove file entry from the directory
+	file->hard_links--;				//Decrement the number of links to file's inode
 
 	//If the number of links isn't 0, we can't remove the data
 	if (file->hard_links > 0)
