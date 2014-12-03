@@ -85,7 +85,7 @@ int traverse_path(char *path){
 
 	tmp = path;
 	tmp = strtok(path, "/");
-  	for (i = 0; i < steps && !tmp; i++){
+  	for (i = 0; i < steps && tmp != NULL; i++){
   		cpath[i] = tmp;
 
   		if (debug){
@@ -101,11 +101,11 @@ int traverse_path(char *path){
   		}
 
   		//If the given directory is found, its inode is set as the current 
-  		walk = (Inode *) &ext2_image[addr_root + next * INODE_SIZE - INODE_SIZE];
+  		walk = (Inode *) &ext2_image[addr_root + next * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 
   		if (debug){
   			printf("Current inode: %d\n", addr_root + next -1);
-  			printf(" Address: %d\n", addr_root + next * INODE_SIZE - INODE_SIZE);
+  			printf(" Address: %d\n", addr_root + next * INODE_SIZE - ROOT_BLOCK * INODE_SIZE);
   		}
 
   		tmp = strtok (NULL, "/");	//Finds the next filename to find
