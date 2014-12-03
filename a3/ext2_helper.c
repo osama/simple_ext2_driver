@@ -15,6 +15,8 @@ unsigned char *ext2_image;	//Points to the mapped data from the image file
 int fd, addr_root = -1;		//File descriptor for file image and the root inode's address
 struct stat image;			//Information relating to the provided image file
 
+extern char* finalname;
+
 /* This function is used to read the binary data from a provided
  * file. This data is mapped into memory and read with the use
  * of the global variable ext2_image.
@@ -53,7 +55,7 @@ void close_image(){
 int traverse_path(char *path){
 	int index = -1, steps, i;
 	Inode *walk;
-	char *buffer = NULL, *tmp = path;
+	char *tmp = path;
 
 	//Calculating number of steps needed to reach the required destination
 	for (steps=0; tmp[steps]; tmp++){
@@ -63,6 +65,8 @@ int traverse_path(char *path){
 
 	//Decrement steps by one to remove root node
 	steps--;
+
+	char *cpath[steps];
 	
 	//Calculating the byte address of the root inode if it hasn't been found yet
 	if (addr_root == -1){
@@ -80,16 +84,16 @@ int traverse_path(char *path){
 	walk = (Inode *) &ext2_image[addr_root];
 
 	tmp = path;
-	buffer = strtok (tmp, "/");	//The first '/' represents the root so we will discard it
-  	for (i = 0; i < steps; i++){
-  		buffer = strtok (NULL, "/");	//Finds the next filename to find
+	tmp = strtok(path, "/");
+  	for (i = 0; i < steps && !tmp; i++){
+  		cpath[i] = tmp;
 
   		if (debug){
-  			printf("Current path walk: %s  Remaining: %s\n", buffer, tmp);
+  			printf("Current path walk: %s", tmp);
   		}
 
   		//If the given file exists, we can continue
-  		int next = file_exists(walk, buffer);
+  		int next = file_exists(walk, tmp);
 
   		if (next == -1 || i == steps - 1){
   			index = next;	//If the file is found, it is set as the index
@@ -104,11 +108,18 @@ int traverse_path(char *path){
   			printf(" Address: %d\n", addr_root + next * INODE_SIZE - INODE_SIZE);
   		}
 
+  		tmp = strtok (NULL, "/");	//Finds the next filename to find
   	}
 
+  	finalname = cpath[steps - 1];
   	//If there were zero steps to be taken, the root node is the index
   	if (!steps){
   		index = ROOT_BLOCK;
+  		finalname = tmp;
+  	}
+
+  	if (debug){
+  		printf("File name: %s\n", finalname);
   	}
 
 	return index;
@@ -127,23 +138,30 @@ int file_exists(Inode *dir, char *filename){
 		int crossed = 0;
 		int dblock = dir->db[i] * BLOCK_SIZE;
 	  	Dir_entry *dentry = (Dir_entry *) &ext2_image[dblock];	//Loading current directory
-
-	  	if (debug){
-	  		printf("Current Dir Entry: %s\n", dentry->name);
-	  	}
 	
+		if (debug){
+			printf("Searching for file in data block %d.\n", dblock);
+		}
 		//Search while the data entries are not null and 
 		//the end of the data block has not been reached
 	  	while (dentry->inode && crossed < BLOCK_SIZE){
+	  		if (debug){
+	  			printf("Current Dir Entry: %s\n", dentry->name);
+	  		}
+
 	  		//If a directory entry matches the provided filename, we can obtain its index
 	  		if (!strncmp(dentry->name, filename, dentry->name_length)){
 	  			index = dentry->inode;
 	  			break;
 	  		}
 	  		
+
+	  		if (debug){
+	  			printf("Current dir entry size: %d\n", dentry->size);
+	  		}
 	  		//If nothing has been found, proceed to the next directory entry
 	  		crossed += dentry->size;
-	  		dentry += dentry->size;
+	  		dentry = (Dir_entry *) ((char *) dentry + dentry->size);
 	  	}
 
 	  	//If the index has been set, the loop can exit
@@ -173,9 +191,13 @@ int mk_file_entry(Inode *dir, char *filename, char type, int index){
 	}
 
 	for(i = 0; i < 12 && !done; i++){
-		if (!dir->db[i]){	//If the directory data block is unused, allocate a new one
+		if (!(dir->db[i])){	//If the directory data block is unused, allocate a new one
 			dir->db[i] = find_free_block();
 			done = 1;		//If we have allocated a free block, no repeat needed
+
+			if (debug){
+				printf("Allocating block %d for %d direct block pointer\n", dir->db[i], i);
+			}
 			
 			//If no data block was found, reset address
 			if (dir->db[i] == -1){
@@ -191,36 +213,39 @@ int mk_file_entry(Inode *dir, char *filename, char type, int index){
 		int crossed = 0;
 		int dblock = dir->db[i] * BLOCK_SIZE;
 	  	dentry = (Dir_entry *) &ext2_image[dblock];
-
-	  	if (debug){
-	  		printf("Current Dir Entry: %s\n", dentry->name);
-	  	}
 		
 		//Keep traversing until an empty space is found in the data block
 	  	while (dentry->inode && crossed < BLOCK_SIZE){	
 			prev = dentry; 
 	  		crossed += dentry->size;
 
+	  		if (debug){
+	  			printf("Current Dir Entry: %s\n", dentry->name);
+	  		}	
+
 	  		//If there is empty space in the current data block large enough
 	  		if (crossed < BLOCK_SIZE - totalsize){
-	  			dentry +=  dentry->size;
+	  			dentry =  (Dir_entry *) ((char *) dentry + dentry->size);
 	  		}
 
 	  		//If the previous data block was the last block, add a new entry after it
 	  		if (prev->size - prev->name_length - 10 > strlen(filename) + 10){
-	  			dentry = prev->name_length + 10;
-	  			crossed -= (prev->name_length + 10);
+	  			dentry = (Dir_entry *)((char *)prev + (uint32_t) prev->name_length + 10);
+	  			crossed -= prev->size;
+	  			crossed += prev->name_length + 10;
+	  			done = 1;
+	  			break;
 	  		}
 	  	}
 
 	  	//The size of the data entry 
 	  	totalcrossed = BLOCK_SIZE - crossed;
 
-	  }
+	}
 
 	  //Set values of the new directory entry
-	  if (index != -1){
-	  	prev->size = 10 + prev->name_length;
+	if (index != -1){
+	  	prev->size = (char ) (10 + prev->name_length);
 
 	  	dentry->inode = (uint32_t) index;
 		dentry->size = (uint16_t) totalcrossed;
@@ -262,7 +287,7 @@ void rm_file_entry(Inode *dir, char *filename){
 	  		prev = dentry;
 	  		//Move onto the next entry in the data block
 	  		crossed += dentry->size;
-	  		dentry += dentry->size;
+	  		dentry = (Dir_entry *) ((char *) dentry + dentry->size);
 	  	}
 	  }
 }
