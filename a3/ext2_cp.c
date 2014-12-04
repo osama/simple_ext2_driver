@@ -109,7 +109,7 @@ int main (int argc, char **argv){
 		sb_unallocated_count(-1, 0);
 
 		//Write to data block until it's full
-		while (written < BLOCK_SIZE){
+		while (written <= BLOCK_SIZE){
 			if (read == image.st_size)
 				break;
 
@@ -127,7 +127,7 @@ int main (int argc, char **argv){
 	//Obtaining singly indirect pointer, if needed
 	if (read < image.st_size){
 		file->db_singly = find_free_block();
-		uint32_t *db = (uint32_t *)  &ext2_image[file->db_singly * BLOCK_SIZE - BLOCK_SIZE];
+		uint32_t *db = (uint32_t *)  &ext2_image[file->db_singly * BLOCK_SIZE];
 
 		if (file->db_singly == -1){
 			file->db_singly = 0;
@@ -147,7 +147,7 @@ int main (int argc, char **argv){
 			sb_unallocated_count(-1, 0);
 
 			//Write to data block until it's full
-			while (written < BLOCK_SIZE){
+			while (written <= BLOCK_SIZE){
 				if (read == image.st_size)
 					break;
 
@@ -158,6 +158,8 @@ int main (int argc, char **argv){
 
 			if (read == image.st_size)
 				break;
+
+			written = 0;
 		}
 	}
 
