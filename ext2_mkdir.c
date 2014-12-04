@@ -70,19 +70,23 @@ int main (int argc, char **argv){
 		return 1;
 	}
 
-	int i;
+	//Setting . and .. pointers for the new directory
 	int data_index = BLOCK_SIZE * file->db[0];
 
-	//Copying over . and .. pointers from root
-	for (i = 0; i < 24; i++){
-		ext2_image[data_index + i] = ext2_image[addr_root + i];
-	}
+	Dir_entry *current = (Dir_entry *) &ext2_image[data_index];
+	Dir_entry *parent = (Dir_entry *) &ext2_image[data_index + 12];
 
-	//Modifying . and .. pointers to suit the new directory
-	uint32_t *current = (uint32_t *) &ext2_image[data_index];
-	uint32_t *parent = (uint32_t *) &ext2_image[data_index + 12];
-	*current = index;
-	*parent = dir_addr;
+	current->inode = index;
+	current->size = 12;
+	current->name_length = 1;
+	current->type = 2;
+	current->name[] = ".";
+
+	current->inode = dir_addr;
+	current->size = BLOCK_SIZE - 12;
+	current->name_length = 1;
+	current->type = 2;
+	current->name[] = "..";
 
 	//Modifying the count of unallocated data blocks and inodes
 	sb_unallocated_count(-1, -1);
