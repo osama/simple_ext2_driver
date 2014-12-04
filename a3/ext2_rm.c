@@ -54,7 +54,7 @@ int main (int argc, char **argv){
 	//Unallocate all set direct block pointers
 	for (i = 0; i < 12; i++){
 		if (!file->db[i]){
-			toggle_data_bitmap(file->db[i] + 1);
+			toggle_data_bitmap(file->db[i]);
 			count++;
 		}
 	}
@@ -65,14 +65,14 @@ int main (int argc, char **argv){
 		
 		for (i = 0; i < 256; i++){
 			if (data[i]){
-				toggle_data_bitmap(data[i] + 1);
+				toggle_data_bitmap(data[i]);
 				count++;
 			} else{
 				break;
 			}
 		}
 		//Deallocate the data block holding the singly indirect
-		toggle_data_bitmap(file->db_singly + 1);
+		toggle_data_bitmap(file->db_singly);
 	}
 
 	//Deallocate the file's inode
