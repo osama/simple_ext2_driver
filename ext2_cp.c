@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <linux/limits.h>
 #include <strings.h>
+#include <time.h>
 #include "ext2.h"
 
 extern char *ext2_image;
@@ -78,7 +79,7 @@ int main (int argc, char **argv){
 
 	//Writing default information for the new inode
 	Inode * root = (Inode *) &ext2_image[addr_root];
-	file->mode = 0x81b4
+	file->mode = 0x81b4;
 	file->uid = root->uid;
 	file->size = image.st_size;
 
