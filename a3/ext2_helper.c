@@ -27,6 +27,7 @@ int read_image(char *filename){
         return -1;
     }
 
+    image = malloc(sizeof(struct stat));
     fstat(fd, &image);	//Obtain file information to read filesize
 
     ext2_image = mmap(NULL, image.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
@@ -49,6 +50,8 @@ void close_image(){
 	if (close(fd)){
 		perror("Closing image");
 	}
+
+	free(image);
 }
 
 /* This function takes a Linux filepath and uses it to traverse the specified image.*/
