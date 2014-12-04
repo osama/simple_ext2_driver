@@ -153,7 +153,7 @@ int file_exists(Inode *dir, char *filename){
 	  		}
 
 	  		//If a directory entry matches the provided filename, we can obtain its index
-	  		if (!strncmp(dentry->name, filename, dentry->name_length)){
+	  		if (!strcmp(dentry->name, filename)){
 	  			if (debug)
 	  				printf("Found!\n");
 	  			index = dentry->inode;
@@ -283,7 +283,7 @@ void rm_file_entry(Inode *dir, char *filename){
 	  		}
 
 	  		//If the directory entry matches, reset all values
-	  		if (!strncmp(dentry->name, filename, dentry->name_length)){
+	  		if (!strcmp(dentry->name, filename)){
 	  			if(debug)
 	  				printf("RM - Found!\n");
 
