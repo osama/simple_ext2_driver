@@ -63,6 +63,10 @@ int traverse_path(char *path){
 			steps++;
 	}
 
+	if(debug){
+		printf("Steps: %d\n", steps);
+	}
+
 	//Calculating the byte address of the root inode if it hasn't been found yet
 	if (addr_root == -1){
 		//The block group descriptor table is always the third data block in the image
@@ -83,10 +87,6 @@ int traverse_path(char *path){
   	for (i = 0; i < steps && tmp != NULL && steps > 1; i++){
   		finalname = tmp;
 
-  		if (debug){
-  			printf("Current path walk: %s\n", tmp);
-  		}
-
   		//If the given file exists, we can continue
   		int next = file_exists(walk, tmp);
 
@@ -95,11 +95,15 @@ int traverse_path(char *path){
   			break;
   		}
 
+  		if (debug){
+  			printf("Current path walk: %s\n", tmp);
+  		}
+
   		//If the given directory is found, its inode is set as the current 
   		walk = (Inode *) &ext2_image[addr_root + next * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 
   		if (debug){
-  			printf("Current inode: %d\n", addr_root + next -1);
+  			printf("Current inode: %d\n", next);
   			printf(" Address: %d\n", addr_root + next * INODE_SIZE - ROOT_BLOCK * INODE_SIZE);
   		}
 
