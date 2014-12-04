@@ -12,10 +12,10 @@
 extern char *ext2_image;
 extern int addr_root;
 extern int debug;
-struct stat *image;
 char* finalname;
 
 int main (int argc, char **argv){
+	struct stat *image;	
 
 	if (argc != 4){	//Checking if an incorrect number of arguments have been provided.
 		printf("usage: ext2_cp virtual_disk local_path absolute_path\n");
@@ -91,7 +91,7 @@ int main (int argc, char **argv){
 	Inode * root = (Inode *) &ext2_image[addr_root];
 	file->mode = 0x81b4;
 	file->uid = root->uid;
-	file->size = image->st_size;
+	file->size = (uint32_t) image->st_size;
 
 	file->groupid = root->groupid;
 	file->hard_links = 1;
@@ -121,22 +121,26 @@ int main (int argc, char **argv){
 
 		//Write to data block until it's full
 		while (written <= BLOCK_SIZE){
-			if (read == image->st_size)
+			if (read == (int) image->st_size)
 				break;
 
 			ext2_image[BLOCK_SIZE * file->db[i] + written] = lfile[read];
 			read++;
 			written++;
+
+			if (debug){
+				printf("Read byte %d of %d.\n", read, (int) image->st_size);
+			}
 		}
 
-		if (read == image->st_size)
+		if (read == (int) image->st_size)
 			break;
 
 		written = 0;
 	}
 
 	//Obtaining singly indirect pointer, if needed
-	if (read < image->st_size){
+	if (read < (int) image->st_size){
 		file->db_singly = find_free_block();
 		uint32_t *db = (uint32_t *)  &ext2_image[file->db_singly * BLOCK_SIZE];
 
@@ -159,7 +163,7 @@ int main (int argc, char **argv){
 
 			//Write to data block until it's full
 			while (written <= BLOCK_SIZE){
-				if (read == image->st_size)
+				if (read == (int) image->st_size)
 					break;
 
 				ext2_image[BLOCK_SIZE *db[i] + written] = lfile[read];
@@ -167,7 +171,7 @@ int main (int argc, char **argv){
 				written++;
 			}
 
-			if (read == image->st_size)
+			if (read == (int) image->st_size)
 				break;
 
 			written = 0;
