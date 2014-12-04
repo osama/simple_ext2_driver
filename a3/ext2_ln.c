@@ -76,7 +76,7 @@ int create_link(char *path, int findex){
 	}
 
 	//Increment the hard link pointer in the inode to indicate multiple links to data
-	file = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
+	file = (Inode *) &ext2_image[addr_root + findex * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 	file->hard_links++;
 
 	return 0;
