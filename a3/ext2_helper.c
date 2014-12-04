@@ -51,7 +51,7 @@ void close_image(){
 		perror("Closing image");
 	}
 
-	free(image);
+	free(&image);
 }
 
 /* This function takes a Linux filepath and uses it to traverse the specified image.*/
