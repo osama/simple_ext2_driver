@@ -32,6 +32,7 @@ int main (int argc, char **argv){
     }
 
     //Mapping opened file into memory
+    image = malloc(sizeof(struct stat));
     fstat(fd, &image);
 
     lfile = mmap(NULL, image.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -173,5 +174,6 @@ int main (int argc, char **argv){
 		}
 	}
 
+	free(image);
     return 0;
 }
