@@ -63,11 +63,6 @@ int traverse_path(char *path){
 			steps++;
 	}
 
-	//Decrement steps by one to remove root node
-	steps--;
-
-	char *cpath[steps];
-	
 	//Calculating the byte address of the root inode if it hasn't been found yet
 	if (addr_root == -1){
 		//The block group descriptor table is always the third data block in the image
@@ -86,7 +81,7 @@ int traverse_path(char *path){
 	tmp = path;
 	tmp = strtok(path, "/");
   	for (i = 0; i < steps && tmp != NULL; i++){
-  		cpath[i] = tmp;
+  		finalname = tmp;
 
   		if (debug){
   			printf("Current path walk: %s", tmp);
@@ -111,7 +106,6 @@ int traverse_path(char *path){
   		tmp = strtok (NULL, "/");	//Finds the next filename to find
   	}
 
-  	finalname = cpath[steps - 1];
   	//If there were zero steps to be taken, the root node is the index
   	if (!steps){
   		index = ROOT_BLOCK;
