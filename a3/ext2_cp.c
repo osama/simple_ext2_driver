@@ -129,7 +129,7 @@ int main (int argc, char **argv){
 			written++;
 
 			if (debug){
-				printf("Read byte %d of %d.\n", read, (int) image->st_size);
+				printf("Wrote byte %d of %d.\n", read, (int) image->st_size);
 			}
 		}
 
@@ -169,6 +169,10 @@ int main (int argc, char **argv){
 				ext2_image[BLOCK_SIZE *db[i] + written] = lfile[read];
 				read++;
 				written++;
+
+				if (debug){
+					printf("Wrote byte %d of %d.\n", read, (int) image->st_size);
+				}
 			}
 
 			if (read == (int) image->st_size)
