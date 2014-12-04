@@ -13,7 +13,7 @@ const int debug = 12;		//Used to print debug messages
 
 unsigned char *ext2_image;	//Points to the mapped data from the image file
 int fd, addr_root = -1;		//File descriptor for file image and the root inode's address
-struct stat image;			//Information relating to the provided image file
+struct stat *image;			//Information relating to the provided image file
 
 extern char* finalname;
 
@@ -28,9 +28,9 @@ int read_image(char *filename){
     }
 
     image = malloc(sizeof(struct stat));
-    fstat(fd, &image);	//Obtain file information to read filesize
+    fstat(fd, image);	//Obtain file information to read filesize
 
-    ext2_image = mmap(NULL, image.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    ext2_image = mmap(NULL, image->st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 
     if (ext2_image == MAP_FAILED){
     	perror("Mapping image");
@@ -43,7 +43,7 @@ int read_image(char *filename){
 /* This function closes the memory mapping, thus saving all modified information.
  */
 void close_image(){
-	if (munmap(ext2_image, image.st_size)){
+	if (munmap(ext2_image, image->st_size)){
 		perror("Updating image");
 	}
 
@@ -51,7 +51,7 @@ void close_image(){
 		perror("Closing image");
 	}
 
-	free(&image);
+	free(image);
 }
 
 /* This function takes a Linux filepath and uses it to traverse the specified image.*/
