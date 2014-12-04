@@ -60,14 +60,20 @@ int main (int argc, char **argv){
 	file->db[0] = find_free_block();
 
 	if (debug)
-		printf("New dir's inode byte: %d\n", addr_root + index * INODE_SIZE - ROOT_BLOCK * INODE_SIZE);
+		printf("New dir's inode: %d\n New dir's inode byte: %d\n", 
+			addr_root + index * INODE_SIZE - ROOT_BLOCK * INODE_SIZE, index);
 
 	//If there are no data blocks available, perform cleanup
 	if (file->db[0] == -1){
 		fprintf(stderr, "No more space for new file or directory.\n");
 		toggle_inode_bitmap(index);
 		rm_file_entry(dir, finalname);
+		close_image();
 		return 1;
+	}
+
+	if (debug){
+		printf("New directory's data block: %d\n", file->db[0]);
 	}
 
 	//Setting . and .. pointers for the new directory
@@ -80,16 +86,18 @@ int main (int argc, char **argv){
 	current->size = 12;
 	current->name_length = 1;
 	current->type = 2;
-	current->name[] = ".";
+	current->name[0] = '.';
 
-	current->inode = dir_addr;
-	current->size = BLOCK_SIZE - 12;
-	current->name_length = 1;
-	current->type = 2;
-	current->name[] = "..";
+	parent->inode = dir_addr;
+	parent->size = BLOCK_SIZE - 12;
+	parent->name_length = 1;
+	parent->type = 2;
+	parent->name[0] = '.';
+	parent->name[1] = '.';
 
 	//Modifying the count of unallocated data blocks and inodes
 	sb_unallocated_count(-1, -1);
 
+	close_image();
 	return 0;
 }
