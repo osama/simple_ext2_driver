@@ -74,7 +74,7 @@ int main (int argc, char **argv){
 	}
 
 	//Obtaining the file's inode to set information
-	file = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
+	file = (Inode *) &ext2_image[addr_root + index * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 	//TODO: Write Inode properly
 
 	sb_unallocated_count(0, -1);
