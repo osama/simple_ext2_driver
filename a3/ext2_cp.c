@@ -75,7 +75,22 @@ int main (int argc, char **argv){
 
 	//Obtaining the file's inode to set information
 	file = (Inode *) &ext2_image[addr_root + index * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
-	//TODO: Write Inode properly
+
+	//Writing default information for the new inode
+	Inode * root = (Inode *) &ext2_image[addr_root];
+	file->mode = 0x81b4
+	file->uid = root->uid;
+	file->size = image.st_size;
+
+	file->groupid = root->groupid;
+	file->hard_links = 1;
+	file->disk_sectors = root->disk_sectors;
+
+	//Setting access and creation times for new directory
+	int ftime = (int) time(NULL);
+	file->access_time = ftime;
+	file->creation_time = ftime;
+	file->modification_time = ftime;
 
 	sb_unallocated_count(0, -1);
 	
