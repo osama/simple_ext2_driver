@@ -11,6 +11,7 @@
 
 extern char *ext2_image;
 extern int addr_root;
+extern int debug;
 struct stat image;
 char* finalname;
 
