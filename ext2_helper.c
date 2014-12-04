@@ -107,7 +107,7 @@ int traverse_path(char *path){
   	}
 
   	//If there were zero steps to be taken, the root node is the index
-  	if (!steps){
+  	if (steps == 1){
   		index = ROOT_BLOCK;
   		finalname = tmp;
   	}
