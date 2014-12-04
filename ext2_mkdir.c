@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "ext2.h"
 
 extern char *ext2_image;
@@ -56,7 +57,24 @@ int main (int argc, char **argv){
 
 	//Accessing the new directory's inode to add information
 	file = (Inode *) &ext2_image[addr_root + index * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
-	//TODO: Write Inode properly
+
+	//Writing default information to new inode using information from root inode
+	Inode * root = (Inode *) &ext2_image[addr_root];
+	file->mode = root->mode;
+	file->uid = root->uid;
+	file->size = root->size;
+
+	file->groupid = root->groupid;
+	file->hard_links = 1;
+	file->disk_sectors = root->disk_sectors;
+
+	//Setting access and creation times for new directory
+	int ftime = (int) time(NULL);
+	file->access_time = ftime;
+	file->creation_time = ftime;
+	file->modification_time = ftime;
+	
+	//Finding a data block to store new directory's entries
 	file->db[0] = find_free_block();
 
 	if (debug)
