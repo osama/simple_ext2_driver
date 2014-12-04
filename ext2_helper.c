@@ -346,7 +346,7 @@ int find_free_block(){
 	}
 
 	if(debug){
-		printf("Data block %d is free.\n", free_index);
+		printf("Data block %d is free, reference at %d of %d.\n", free_index, d, c);
 	}
 
 	toggle_data_bitmap(free_index);	//Toggle the bit to indicate that it's taken
@@ -380,7 +380,7 @@ int find_free_inode(){
 	}
 
 	if(debug){
-		printf("Inode %d is free.\n", free_index);
+		printf("Inode %d is free, reference at %d of %d.\n", free_index, d, c);
 	}
 
 	toggle_inode_bitmap(free_index); //Toggle the bit to indicate that it's taken
@@ -397,7 +397,7 @@ void toggle_data_bitmap(int index){
 	int c = index/8, d = 8 - index + c * 8;
 
 	if(debug){
-		printf("Toggling data bit %d\n", d);
+		printf("Toggling data bit %d\n", c+d);
 	}
 
 	ext2_image[bitmap_addr + c]	^= 1 << d;
@@ -413,7 +413,7 @@ void toggle_inode_bitmap(int index){
 	int c = index/8, d = 8 - index + c * 8;
 
 	if(debug){
-		printf("Toggling inode bit %d\n", d);
+		printf("Toggling inode bit %d\n", c+d);
 	}
 
 	ext2_image[bitmap_addr + c]	^= 1 << d;
