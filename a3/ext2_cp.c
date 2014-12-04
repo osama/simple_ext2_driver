@@ -15,22 +15,17 @@ struct stat image;
 char* finalname;
 
 int main (int argc, char **argv){
-	char *filename = argv[2], *lfile;
 
 	if (argc != 4){	//Checking if an incorrect number of arguments have been provided.
 		printf("usage: ext2_cp virtual_disk local_path absolute_path\n");
 		return 1;
 	}
 
-	//Reading the disk image into memory
-	if (read_image(argv[1])){
-		return 1;
-	}
-
 	//Opening the local file to be copied as read-only
 	int fd;
+	char *lfile;
 
-	if ((fd = open(filename, O_RDONLY)) == -1) {
+	if ((fd = open(argv[2], O_RDONLY)) == -1) {
         perror("Opening local image");
         return 1;
     }
@@ -48,11 +43,16 @@ int main (int argc, char **argv){
     	return 1;
     }
 
+    //Reading the disk image into memory
+	if (read_image(argv[1])){
+		return 1;
+	}
+
     //Finding the target directory by traversing the given path
     int dir_addr, index;
 	Inode *dir, *file;
 
-	if ((dir_addr = traverse_path(argv[2])) == -1){
+	if ((dir_addr = traverse_path(argv[3])) == -1){
 		fprintf(stderr, "The specified path was not found in %s.\n", argv[1]);
 		close_image();
 		return 1;
@@ -61,11 +61,19 @@ int main (int argc, char **argv){
 	//Setting directory's inode
 	dir = (Inode *) &ext2_image[addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE];
 
+	if (debug){
+		printf(" Directory inode: %d\n", addr_root + dir_addr * INODE_SIZE - ROOT_BLOCK * INODE_SIZE);
+	}
+
 	//Checking if the file to be copied already exists, if not, making a new file entry
 	if ((index = file_exists(dir, finalname)) != -1){
 		fprintf(stderr, "The file already exists in %s.\n", argv[1]);
 		close_image();
 		return 1;
+	}
+
+	if (debug){
+		printf("File does not already exist.\n");
 	}
 
 	if ((index = mk_file_entry(dir, finalname, (char) 1, -1)) == -1){
@@ -114,7 +122,7 @@ int main (int argc, char **argv){
 			if (read == image.st_size)
 				break;
 
-			ext2_image[BLOCK_SIZE *file->db[i] + written] = lfile[read];
+			ext2_image[BLOCK_SIZE * file->db[i] + written] = lfile[read];
 			read++;
 			written++;
 		}
