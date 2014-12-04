@@ -339,7 +339,7 @@ int find_free_block(){
 		for (d = 0; d < 8 && !found; d++){
 			//Check value of bit and trigger if it is unset
 			if (!(test & (1 << d))){
-				free_index = 8 - d + c * 8;
+				free_index = d + c * 8;
 				found = 1;
 			}
 		}
@@ -373,7 +373,7 @@ int find_free_inode(){
 		for (d = 0; d < 8 && !found; d++){
 			//Check value of bit and trigger if it is unset
 			if (!(test & (1 << d))){
-				free_index = 8 - d + c * 8;
+				free_index = d + c * 8;
 				found = 1;
 			}
 		}
@@ -394,7 +394,7 @@ void toggle_data_bitmap(int index){
 	int bitmap_addr = BLOCK_SIZE * bgr->addr_block_usage;
 
 	//C represents the byte to check and d represents the bit
-	int c = index/8, d = 8 - index + c * 8;
+	int c = index/8, d = index - c * 8;
 
 	if(debug){
 		printf("Toggling data bit %d\n", c+d);
@@ -410,7 +410,7 @@ void toggle_inode_bitmap(int index){
 	int bitmap_addr = BLOCK_SIZE * bgr->addr_inode_usage;
 
 	//C represents the byte to check and d represents the bit
-	int c = index/8, d = 8 - index + c * 8;
+	int c = index/8, d = index - c * 8;
 
 	if(debug){
 		printf("Toggling inode bit %d\n", c+d);
