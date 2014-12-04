@@ -53,7 +53,7 @@ void close_image(){
 
 /* This function takes a Linux filepath and uses it to traverse the specified image.*/
 int traverse_path(char *path){
-	int index = -1, steps, i;
+	int index = -1, steps, i, next;
 	Inode *walk;
 	char *tmp = path;
 
@@ -87,11 +87,16 @@ int traverse_path(char *path){
   	for (i = 0; i < steps && tmp != NULL && steps > 1; i++){
   		finalname = tmp;
 
-  		//If the given file exists, we can continue
-  		int next = file_exists(walk, tmp);
-
-  		if (next == -1 || i == steps - 1){
+  		if (i == steps - 1){
   			index = next;	//If the file is found, it is set as the index
+  			break;
+  		}
+
+  		//If the given file exists, we can continue
+  		next = file_exists(walk, tmp);
+
+  		if (next == -1){
+  			index = next;	//If the file is not found, we return -1
   			break;
   		}
 
