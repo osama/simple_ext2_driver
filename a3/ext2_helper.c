@@ -80,11 +80,11 @@ int traverse_path(char *path){
 
 	tmp = path;
 	tmp = strtok(path, "/");
-  	for (i = 0; i < steps && tmp != NULL; i++){
+  	for (i = 0; i < steps && tmp != NULL && steps > 1; i++){
   		finalname = tmp;
 
   		if (debug){
-  			printf("Current path walk: %s", tmp);
+  			printf("Current path walk: %s\n", tmp);
   		}
 
   		//If the given file exists, we can continue
