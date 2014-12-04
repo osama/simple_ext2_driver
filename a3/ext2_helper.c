@@ -346,7 +346,7 @@ int find_free_block(){
 	}
 
 	toggle_data_bitmap(free_index);	//Toggle the bit to indicate that it's taken
-	return free_index - 1;	//The count for data blocks starts at 0
+	return free_index;
 }
 
 /* This function checks for an unset bit in the free inode bitmap
@@ -399,6 +399,10 @@ void toggle_inode_bitmap(int index){
 
 	//C represents the byte to check and d represents the bit
 	int c = index/8, d = 8 - index + c * 8;
+
+	if(debug){
+		printf("Toggling inode bit %d\n", d);
+	}
 
 	ext2_image[bitmap_addr + c]	^= 1 << d;
 }
